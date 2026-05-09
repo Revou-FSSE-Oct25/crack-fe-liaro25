@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FFF8F1;
+  --foreground: #4A3428;
+}
+
+@theme inline {
+  /* Macaron Palette */
+  --color-primary: #F4A7B9;
+  --color-secondary: #C9B6E4;
+  --color-accent: #BFE3C0;
+  --color-accent2: #F7E58D;
+
+  /* Neutral */
+  --color-background: #FFF8F1;
+  --color-surface: #FFFFFF;
+  --color-border-soft: #EBDDD1;
+
+  /* Text */
+  --color-text-primary: #4A3428;
+  --color-text-secondary: #6B7280;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-nunito), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-quicksand), sans-serif;
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
