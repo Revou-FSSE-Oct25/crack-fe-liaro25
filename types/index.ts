@@ -16,10 +16,39 @@ export interface LoginResponse {
 
 export interface Reservation {
   id: string;
+  userId?: string | null;
+
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
   reservationCode: string;
-  customerName: string;
   reservationDate: string;
-  reservationTime: string;
+  startTime: string;
+  endTime?: string;
   guestCount: number;
   status: string;
+  createdAt?: string;
+  updatedAt?: string;
+  tables?: {
+    id: string;
+    table: {
+      id: string;
+      name: string;
+      capacity: number;
+      status: string;
+    };
+  }[];
+
+  order?: unknown | null;
 }
+
+export interface CreateReservationRequest {
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  reservationDate: string;
+  startTime: string;
+  guestCount: number;
+}
+
+export type ReservationResponse = Reservation;
