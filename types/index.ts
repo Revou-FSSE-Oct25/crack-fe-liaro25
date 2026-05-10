@@ -1,14 +1,17 @@
 export type UserRole = "ADMIN" | "CUSTOMER";
 
-export interface LoginResponse {
-  accessToken: string;
-}
-
 export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: UserRole;
+}
+
+export interface LoginResponse {
+  message: string;
+  accessToken: string;
+  user: User;
 }
 
 export interface Reservation {
