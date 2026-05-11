@@ -52,3 +52,18 @@ export interface CreateReservationRequest {
 }
 
 export type ReservationResponse = Reservation;
+
+export interface Table {
+  id: string;
+  name: string;
+  capacity: number;
+  status: string;
+}
+
+export interface Menu {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  status: string;
+}
