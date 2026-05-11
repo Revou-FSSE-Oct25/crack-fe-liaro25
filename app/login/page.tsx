@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { saveUser } from "@/lib/auth";
+import { getCurrentUser, saveUser } from "@/lib/auth";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
@@ -16,7 +16,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    async function checkAuth() {
+      const user = await getCurrentUser();
+
+      if (!user) return;
+
+      saveUser(user);
+
+      if (user.role === "ADMIN") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/customer";
+      }
+    }
+
+    checkAuth();
+  }, []);
+
+  async function handleSubmit(event: { preventDefault: () => void }) {
     event.preventDefault();
 
     setError("");
