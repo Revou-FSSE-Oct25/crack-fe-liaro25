@@ -119,6 +119,8 @@ export interface Order {
     } | null;
     menuPackage?: unknown | null;
   }[];
+
+  payments?: Payment[];
 }
 
 export interface Payment {
