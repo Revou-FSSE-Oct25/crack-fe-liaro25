@@ -42,10 +42,19 @@ export default function AdminReservationDetailPage() {
 
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [updated, setUpdated] = useState(false);
 
   useEffect(() => {
     fetchReservationDetail();
   }, []);
+
+  useEffect(() => {
+    if (reservation) {
+      setSelectedStatus(reservation.status);
+    }
+  }, [reservation]);
 
   async function fetchReservationDetail() {
     try {
@@ -67,6 +76,50 @@ export default function AdminReservationDetailPage() {
       console.error("Failed to fetch reservation detail:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function updateReservationStatus() {
+    try {
+      setSaving(true);
+      setUpdated(false);
+
+      const token = getToken();
+
+      const response = await fetch(
+        `https://whiskandwonder.up.railway.app/reservations/${reservationId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: selectedStatus,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update reservation status");
+      }
+
+      setReservation((prevReservation) =>
+        prevReservation
+          ? { ...prevReservation, status: selectedStatus }
+          : prevReservation,
+      );
+
+      setUpdated(true);
+
+      setTimeout(() => {
+        setUpdated(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to update reservation status:", error);
+      alert("Failed to update reservation status");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -120,6 +173,38 @@ export default function AdminReservationDetailPage() {
                 </div>
               </div>
 
+              <div className="rounded-2xl bg-white p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-[#2f241d]">
+                  Update Reservation Status
+                </h3>
+
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <select
+                    value={selectedStatus}
+                    onChange={(event) => setSelectedStatus(event.target.value)}
+                    className="rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-sm font-medium capitalize text-[#2f241d] outline-none"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+
+                  <button
+                    onClick={updateReservationStatus}
+                    disabled={saving}
+                    className="rounded-xl bg-[#2f241d] px-5 py-3 text-sm font-medium text-white hover:bg-[#4a3a30] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {saving ? "Saving..." : "Save Status"}
+                  </button>
+
+                  {updated && (
+                    <span className="text-sm font-medium text-green-700">
+                      Updated
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="rounded-2xl bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-[#2f241d]">
@@ -131,14 +216,17 @@ export default function AdminReservationDetailPage() {
                       <span className="font-medium">Name:</span>{" "}
                       {reservation.guestName}
                     </p>
+
                     <p>
                       <span className="font-medium">Email:</span>{" "}
                       {reservation.guestEmail}
                     </p>
+
                     <p>
                       <span className="font-medium">Phone:</span>{" "}
                       {reservation.guestPhone}
                     </p>
+
                     <p>
                       <span className="font-medium">User Role:</span>{" "}
                       {reservation.user?.role || "Guest"}
@@ -156,15 +244,18 @@ export default function AdminReservationDetailPage() {
                       <span className="font-medium">Date:</span>{" "}
                       {formatDate(reservation.reservationDate)}
                     </p>
+
                     <p>
                       <span className="font-medium">Time:</span>{" "}
                       {reservation.startTime}
                       {reservation.endTime ? ` - ${reservation.endTime}` : ""}
                     </p>
+
                     <p>
                       <span className="font-medium">Guests:</span>{" "}
                       {reservation.guestCount}
                     </p>
+
                     <p>
                       <span className="font-medium">Created:</span>{" "}
                       {formatDateTime(reservation.createdAt)}
@@ -188,9 +279,11 @@ export default function AdminReservationDetailPage() {
                         <p className="font-semibold text-[#2f241d]">
                           {item.table.name}
                         </p>
+
                         <p className="mt-1 text-sm text-[#6f6258]">
                           Capacity: {item.table.capacity} guests
                         </p>
+
                         <p className="mt-1 text-sm capitalize text-[#6f6258]">
                           Status: {item.table.status}
                         </p>
@@ -213,14 +306,17 @@ export default function AdminReservationDetailPage() {
                       <span className="font-medium">Subtotal:</span>{" "}
                       {formatCurrency(reservation.order.subtotal)}
                     </p>
+
                     <p>
                       <span className="font-medium">Tax:</span>{" "}
                       {formatCurrency(reservation.order.tax)}
                     </p>
+
                     <p>
                       <span className="font-medium">Total:</span>{" "}
                       {formatCurrency(reservation.order.totalAmount)}
                     </p>
+
                     <p>
                       <span className="font-medium">Status:</span>{" "}
                       <span className="capitalize">
