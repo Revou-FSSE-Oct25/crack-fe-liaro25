@@ -67,3 +67,76 @@ export interface Menu {
   price: string;
   status: string;
 }
+
+export interface Order {
+  id: string;
+  reservationId: string;
+  subtotal: string;
+  tax: string;
+  totalAmount: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+
+  reservation?: {
+    id: string;
+    guestName: string;
+    guestEmail: string;
+    reservationCode: string;
+    reservationDate: string;
+    startTime: string;
+    endTime?: string;
+    guestCount: number;
+    status: string;
+  };
+
+  items?: {
+    id: string;
+    orderId: string;
+    menuItemId?: string | null;
+    menuPackageId?: string | null;
+    quantity: number;
+    price: string;
+    menuItem?: {
+      id: string;
+      name: string;
+      category: string;
+      price: string;
+      status: string;
+    } | null;
+    menuPackage?: unknown | null;
+  }[];
+}
+
+export interface Payment {
+  id: string;
+  orderId: string;
+  amount: string;
+  paymentType: string;
+  status: string;
+  paymentMethod: string;
+  createdAt: string;
+
+  order?: {
+    id: string;
+    reservationId: string;
+    subtotal: string;
+    tax: string;
+    totalAmount: string;
+    status: string;
+    createdAt: string;
+    updatedAt?: string;
+
+    reservation?: {
+      id: string;
+      guestName: string;
+      guestEmail: string;
+      reservationCode: string;
+      reservationDate: string;
+      startTime: string;
+      endTime?: string;
+      guestCount: number;
+      status: string;
+    };
+  };
+}
