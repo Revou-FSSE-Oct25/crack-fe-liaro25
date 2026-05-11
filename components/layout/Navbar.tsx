@@ -23,16 +23,20 @@ export default function Navbar() {
       </Link>
 
       <div className="flex items-center gap-4">
-        {!user && (
-          <>
-            <Link href="/login">Login</Link>
-
-            <Link href="/register">Register</Link>
-          </>
-        )}
-
         {user && (
           <>
+            {user.role === "ADMIN" && (
+              <Link href="/admin" className="text-sm font-medium">
+                Admin Dashboard
+              </Link>
+            )}
+
+            {user.role === "CUSTOMER" && (
+              <Link href="/customer" className="text-sm font-medium">
+                Customer Dashboard
+              </Link>
+            )}
+
             <span className="text-sm">{user.name}</span>
 
             <button

@@ -36,16 +36,27 @@ function formatCurrency(value?: string) {
   return `Rp ${Number(value).toLocaleString("id-ID")}`;
 }
 
-export default function MyReservationDetailPage() {
+export default function CustomerReservationDetailPage() {
   const params = useParams();
   const reservationId = params.id as string;
 
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [reservationDate, setReservationDate] = useState("");
+  const [startTime, setStartTime] = useState("");
 
   useEffect(() => {
     fetchReservationDetail();
   }, []);
+
+  useEffect(() => {
+    if (reservation) {
+      setReservationDate(reservation.reservationDate.split("T")[0]);
+      setStartTime(reservation.startTime);
+    }
+  }, [reservation]);
 
   async function fetchReservationDetail() {
     try {
@@ -67,6 +78,75 @@ export default function MyReservationDetailPage() {
       console.error("Failed to fetch reservation detail:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function rescheduleReservation() {
+    try {
+      setSaving(true);
+
+      const token = getToken();
+
+      const response = await fetch(
+        `https://whiskandwonder.up.railway.app/reservations/${reservationId}/reschedule`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reservationDate,
+            startTime,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to reschedule reservation");
+      }
+
+      await fetchReservationDetail();
+    } catch (error) {
+      console.error("Failed to reschedule reservation:", error);
+      alert("Failed to reschedule reservation");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function cancelReservation() {
+    const confirmCancel = window.confirm(
+      "Are you sure you want to cancel this reservation?",
+    );
+
+    if (!confirmCancel) return;
+
+    try {
+      setSaving(true);
+
+      const token = getToken();
+
+      const response = await fetch(
+        `https://whiskandwonder.up.railway.app/reservations/${reservationId}/cancel`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to cancel reservation");
+      }
+
+      await fetchReservationDetail();
+    } catch (error) {
+      console.error("Failed to cancel reservation:", error);
+      alert("Failed to cancel reservation");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -131,10 +211,12 @@ export default function MyReservationDetailPage() {
                       <span className="font-medium">Name:</span>{" "}
                       {reservation.guestName}
                     </p>
+
                     <p>
                       <span className="font-medium">Email:</span>{" "}
                       {reservation.guestEmail}
                     </p>
+
                     <p>
                       <span className="font-medium">Phone:</span>{" "}
                       {reservation.guestPhone}
@@ -152,21 +234,86 @@ export default function MyReservationDetailPage() {
                       <span className="font-medium">Date:</span>{" "}
                       {formatDate(reservation.reservationDate)}
                     </p>
+
                     <p>
                       <span className="font-medium">Time:</span>{" "}
                       {reservation.startTime}
                       {reservation.endTime ? ` - ${reservation.endTime}` : ""}
                     </p>
+
                     <p>
                       <span className="font-medium">Guests:</span>{" "}
                       {reservation.guestCount}
                     </p>
+
                     <p>
                       <span className="font-medium">Created:</span>{" "}
                       {formatDateTime(reservation.createdAt)}
                     </p>
                   </div>
                 </div>
+              </div>
+
+              <div className="rounded-2xl bg-white p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-[#2f241d]">
+                  Manage Reservation
+                </h3>
+
+                {reservation.status === "cancelled" ? (
+                  <p className="mt-4 text-sm text-red-500">
+                    This reservation has been cancelled.
+                  </p>
+                ) : (
+                  <div className="mt-5 space-y-5">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-[#2f241d]">
+                          Reservation Date
+                        </label>
+
+                        <input
+                          type="date"
+                          value={reservationDate}
+                          onChange={(event) =>
+                            setReservationDate(event.target.value)
+                          }
+                          className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-[#2f241d]">
+                          Start Time
+                        </label>
+
+                        <input
+                          type="time"
+                          value={startTime}
+                          onChange={(event) => setStartTime(event.target.value)}
+                          className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={rescheduleReservation}
+                        disabled={saving}
+                        className="rounded-xl bg-[#2f241d] px-5 py-3 text-sm font-medium text-white hover:bg-[#4a3a30] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {saving ? "Saving..." : "Reschedule"}
+                      </button>
+
+                      <button
+                        onClick={cancelReservation}
+                        disabled={saving}
+                        className="rounded-xl border border-red-300 bg-white px-5 py-3 text-sm font-medium text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Cancel Reservation
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="rounded-2xl bg-white p-6 shadow-sm">
@@ -178,14 +325,17 @@ export default function MyReservationDetailPage() {
                       <span className="font-medium">Subtotal:</span>{" "}
                       {formatCurrency(reservation.order.subtotal)}
                     </p>
+
                     <p>
                       <span className="font-medium">Tax:</span>{" "}
                       {formatCurrency(reservation.order.tax)}
                     </p>
+
                     <p>
                       <span className="font-medium">Total:</span>{" "}
                       {formatCurrency(reservation.order.totalAmount)}
                     </p>
+
                     <p>
                       <span className="font-medium">Status:</span>{" "}
                       <span className="capitalize">
