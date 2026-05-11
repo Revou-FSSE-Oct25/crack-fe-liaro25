@@ -6,9 +6,11 @@ import { getUser, logout as clearAuth } from "@/lib/auth";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setUser(getUser());
+    setIsLoading(false);
   }, []);
 
   function logout() {
@@ -20,6 +22,7 @@ export function useAuth() {
   return {
     user,
     isLoggedIn: !!user,
+    isLoading,
     logout,
   };
 }

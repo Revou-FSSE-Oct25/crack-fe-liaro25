@@ -1,30 +1,30 @@
 import Link from "next/link";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 
-const adminCards = [
+const dashboardCards = [
   {
     title: "Reservations",
-    description: "View and manage guest reservations.",
+    description: "View and manage customer reservations.",
     href: "/admin/reservations",
   },
   {
     title: "Tables",
-    description: "Manage table capacity and availability.",
+    description: "Manage restaurant table availability.",
     href: "/admin/tables",
   },
   {
     title: "Menus",
-    description: "Manage afternoon tea menus and packages.",
+    description: "Manage menu items and categories.",
     href: "/admin/menus",
   },
   {
     title: "Orders",
-    description: "Manage reservation-related orders.",
+    description: "View and manage customer orders.",
     href: "/admin/orders",
   },
   {
     title: "Payments",
-    description: "Track and confirm payment records.",
+    description: "Track payment status and transactions.",
     href: "/admin/payments",
   },
 ];
@@ -32,39 +32,41 @@ const adminCards = [
 export default function AdminDashboardPage() {
   return (
     <ProtectedRoute allowedRoles={["ADMIN"]}>
-      <main className="min-h-screen px-6 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-10">
-            <p className="text-sm uppercase tracking-[0.3em] text-gray-500 mb-3">
-              Admin Panel
+      <main className="min-h-screen bg-[#f8f3ec] px-6 py-10">
+        <section className="mx-auto max-w-6xl">
+          <div className="mb-8">
+            <p className="text-sm font-medium uppercase tracking-[0.3em] text-[#b8895b]">
+              Whisk & Wonder
             </p>
-
-            <h1 className="text-5xl font-bold mb-4">
-              Whisk & Wonder Dashboard
+            <h1 className="mt-2 text-3xl font-bold text-[#2f241d]">
+              Admin Dashboard
             </h1>
-
-            <p className="text-gray-600 max-w-2xl">
+            <p className="mt-2 max-w-2xl text-sm text-[#6f6258]">
               Manage reservations, tables, menus, orders, and payments from one
-              central dashboard.
+              place.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {adminCards.map((card) => (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {dashboardCards.map((card) => (
               <Link
-                key={card.href}
+                key={card.title}
                 href={card.href}
-                className="bg-white rounded-2xl shadow-md p-6 hover:-translate-y-1 transition"
+                className="rounded-2xl border border-[#ead8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <h2 className="text-2xl font-bold mb-3">{card.title}</h2>
-
-                <p className="text-gray-600 mb-6">{card.description}</p>
-
-                <span className="font-semibold">Open →</span>
+                <h2 className="text-xl font-semibold text-[#2f241d]">
+                  {card.title}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-[#6f6258]">
+                  {card.description}
+                </p>
+                <p className="mt-5 text-sm font-semibold text-[#b8895b]">
+                  Open →
+                </p>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
       </main>
     </ProtectedRoute>
   );
