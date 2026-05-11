@@ -157,7 +157,12 @@ export default function AdminReservationsPage() {
                       className="border-t border-[#f1e5d8]"
                     >
                       <td className="px-4 py-4 text-sm text-[#2f241d]">
-                        {reservation.reservationCode}
+                        <Link
+                          href={`/admin/reservations/${reservation.id}`}
+                          className="font-medium text-[#b8895b] hover:underline"
+                        >
+                          {reservation.reservationCode}
+                        </Link>
                       </td>
 
                       <td className="px-4 py-4 text-sm text-[#2f241d]">

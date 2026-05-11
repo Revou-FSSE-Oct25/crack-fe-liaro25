@@ -29,8 +29,21 @@ export interface Reservation {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+    address?: string | null;
+    dateOfBirth?: string | null;
+    role: UserRole;
+  } | null;
+
   tables?: {
     id: string;
+    reservationId?: string;
+    tableId?: string;
     table: {
       id: string;
       name: string;
@@ -39,7 +52,7 @@ export interface Reservation {
     };
   }[];
 
-  order?: unknown | null;
+  order?: Order | null;
 }
 
 export interface CreateReservationRequest {
