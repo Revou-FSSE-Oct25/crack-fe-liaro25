@@ -1,93 +1,135 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { FormEvent, useState } from "react";
+import Link from "next/link";
 
-import { apiFetch } from "@/lib/api";
-import { saveToken, saveUser } from "@/lib/auth";
+import { saveUser } from "@/lib/auth";
 
-import { LoginResponse } from "@/types";
-
-type LoginFormData = {
-  email: string;
-  password: string;
-};
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://whiskandwonder.up.railway.app";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm<LoginFormData>();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-  async function onSubmit(data: LoginFormData) {
+    setError("");
+    setLoading(true);
+
     try {
-      setError("");
-
-      const response = await apiFetch<LoginResponse>("/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
-        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
-      saveToken(response.accessToken);
-      saveUser(response.user);
+      const data = await response.json();
 
-      if (response.user.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/customer");
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
       }
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
+
+      saveUser(data.user);
+
+      if (data.user.role === "ADMIN") {
+        window.location.href = "/admin";
       } else {
-        setError("Login failed");
+        window.location.href = "/customer";
       }
+    } catch (error) {
+      console.error("Login failed:", error);
+
+      setError(error instanceof Error ? error.message : "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
-        <h1 className="text-3xl font-bold mb-6">Login</h1>
+    <main className="min-h-screen bg-[#f8f3ec] px-6 py-12">
+      <section className="mx-auto max-w-md rounded-3xl bg-white p-8 shadow-sm">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-[0.3em] text-[#b8895b]">
+            Whisk & Wonder
+          </p>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <h1 className="mt-3 text-3xl font-bold text-[#2f241d]">
+            Welcome Back
+          </h1>
+
+          <p className="mt-3 text-sm text-[#6f6258]">
+            Login to manage your reservations.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
-            <label className="block mb-2 text-sm font-medium">Email</label>
+            <label className="mb-2 block text-sm font-medium text-[#2f241d]">
+              Email
+            </label>
 
             <input
               type="email"
-              {...register("email")}
-              className="w-full border rounded-lg px-4 py-3"
+              required
+              placeholder="Enter your email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none transition focus:border-[#b8895b]"
             />
           </div>
 
           <div>
-            <label className="block mb-2 text-sm font-medium">Password</label>
+            <label className="mb-2 block text-sm font-medium text-[#2f241d]">
+              Password
+            </label>
 
             <input
               type="password"
-              {...register("password")}
-              className="w-full border rounded-lg px-4 py-3"
+              required
+              placeholder="Enter your password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none transition focus:border-[#b8895b]"
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-500">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-black text-white py-3 rounded-lg"
+            disabled={loading}
+            className="w-full rounded-xl bg-[#2f241d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#4a3a30] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? "Logging in..." : "Login"}
+            {loading ? "Signing In..." : "Login"}
           </button>
         </form>
-      </div>
+
+        <p className="mt-6 text-center text-sm text-[#6f6258]">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/register"
+            className="font-medium text-[#b8895b] hover:underline"
+          >
+            Register
+          </Link>
+        </p>
+      </section>
     </main>
   );
 }

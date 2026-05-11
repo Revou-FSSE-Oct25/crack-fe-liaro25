@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { UserRole } from "@/types";
-import { getUser } from "@/lib/auth";
+
+import { User, UserRole } from "@/types";
+import { getCurrentUser, saveUser } from "@/lib/auth";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -15,29 +16,36 @@ export default function ProtectedRoute({
   allowedRoles,
 }: ProtectedRouteProps) {
   const router = useRouter();
+
   const [isChecking, setIsChecking] = useState(true);
   const [isAllowed, setIsAllowed] = useState(false);
 
   useEffect(() => {
-    const user = getUser();
+    async function checkAccess() {
+      const user = (await getCurrentUser()) as User | null;
 
-    if (!user) {
-      router.push("/login");
-      return;
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      saveUser(user);
+
+      if (!allowedRoles.includes(user.role)) {
+        router.push("/");
+        return;
+      }
+
+      setIsAllowed(true);
+      setIsChecking(false);
     }
 
-    if (!allowedRoles.includes(user.role)) {
-      router.push("/");
-      return;
-    }
-
-    setIsAllowed(true);
-    setIsChecking(false);
+    checkAccess();
   }, [allowedRoles, router]);
 
   if (isChecking) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center">
         <p>Checking access...</p>
       </main>
     );

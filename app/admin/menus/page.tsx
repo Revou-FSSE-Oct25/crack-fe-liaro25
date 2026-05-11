@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { getToken } from "@/lib/auth";
 import { Menu } from "@/types";
 
 export default function AdminMenusPage() {
@@ -17,14 +16,10 @@ export default function AdminMenusPage() {
 
   async function fetchMenus() {
     try {
-      const token = getToken();
-
       const response = await fetch(
         "https://whiskandwonder.up.railway.app/menus/items",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
 

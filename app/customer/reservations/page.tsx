@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { getToken } from "@/lib/auth";
 import { Reservation } from "@/types";
 
 function formatDate(dateString: string) {
@@ -25,14 +24,10 @@ export default function MyReservationsPage() {
 
   async function fetchReservations() {
     try {
-      const token = getToken();
-
       const response = await fetch(
         "https://whiskandwonder.up.railway.app/reservations/my",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
 

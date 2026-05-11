@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { getToken } from "@/lib/auth";
 import { Payment } from "@/types";
 
 function formatCurrency(value: string) {
@@ -29,14 +28,10 @@ export default function AdminPaymentsPage() {
 
   async function fetchPayments() {
     try {
-      const token = getToken();
-
       const response = await fetch(
         "https://whiskandwonder.up.railway.app/payments",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
 

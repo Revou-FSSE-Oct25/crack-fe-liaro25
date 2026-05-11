@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { getToken } from "@/lib/auth";
 import { Reservation } from "@/types";
 
 function formatDate(dateString?: string) {
@@ -60,14 +58,10 @@ export default function CustomerReservationDetailPage() {
 
   async function fetchReservationDetail() {
     try {
-      const token = getToken();
-
       const response = await fetch(
         `https://whiskandwonder.up.railway.app/reservations/${reservationId}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
 
@@ -85,15 +79,13 @@ export default function CustomerReservationDetailPage() {
     try {
       setSaving(true);
 
-      const token = getToken();
-
       const response = await fetch(
         `https://whiskandwonder.up.railway.app/reservations/${reservationId}/reschedule`,
         {
           method: "PATCH",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             reservationDate,
@@ -125,15 +117,11 @@ export default function CustomerReservationDetailPage() {
     try {
       setSaving(true);
 
-      const token = getToken();
-
       const response = await fetch(
         `https://whiskandwonder.up.railway.app/reservations/${reservationId}/cancel`,
         {
           method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
 

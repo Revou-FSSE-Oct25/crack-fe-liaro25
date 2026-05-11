@@ -1,32 +1,73 @@
-import { User } from "@/types";
-
-export function saveToken(token: string) {
-  localStorage.setItem("token", token);
+export interface AuthUser {
+  id?: string;
+  userId?: string;
+  name?: string;
+  email: string;
+  role: "ADMIN" | "CUSTOMER";
 }
 
-export function getToken() {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://whiskandwonder.up.railway.app";
+
+const USER_KEY = "whisk-and-wonder-user";
+
+export function saveUser(user: unknown) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
-export function removeToken() {
-  localStorage.removeItem("token");
+export function getUser() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const storedUser = localStorage.getItem(USER_KEY);
+
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    return null;
+  }
 }
 
-export function saveUser(user: User) {
-  localStorage.setItem("user", JSON.stringify(user));
+export function clearAuth() {
+  localStorage.removeItem(USER_KEY);
 }
 
-export function getUser(): User | null {
-  if (typeof window === "undefined") return null;
+export async function logout() {
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
 
-  const user = localStorage.getItem("user");
-  if (!user) return null;
+  clearAuth();
 
-  return JSON.parse(user);
+  window.location.href = "/login";
 }
 
-export function logout() {
-  removeToken();
-  localStorage.removeItem("user");
+export async function getCurrentUser() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    return data.user;
+  } catch (error) {
+    console.error("Failed to fetch current user:", error);
+    return null;
+  }
 }

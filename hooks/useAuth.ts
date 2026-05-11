@@ -1,22 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { User } from "@/types";
-import { getUser, logout as clearAuth } from "@/lib/auth";
+import {
+  getCurrentUser,
+  getUser,
+  logout as logoutFromServer,
+  saveUser,
+} from "@/lib/auth";
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(getUser());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setUser(getUser());
-    setIsLoading(false);
+    async function checkAuth() {
+      const currentUser = await getCurrentUser();
+
+      if (currentUser) {
+        setUser(currentUser);
+        saveUser(currentUser);
+      } else {
+        setUser(null);
+      }
+
+      setIsLoading(false);
+    }
+
+    checkAuth();
   }, []);
 
-  function logout() {
-    clearAuth();
+  async function logout() {
+    await logoutFromServer();
     setUser(null);
-    window.location.href = "/login";
   }
 
   return {

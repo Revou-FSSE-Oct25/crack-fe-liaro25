@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { getToken } from "@/lib/auth";
 import { Reservation } from "@/types";
 
 function formatDate(dateString?: string) {
@@ -58,17 +57,12 @@ export default function AdminReservationDetailPage() {
 
   async function fetchReservationDetail() {
     try {
-      const token = getToken();
-
       const response = await fetch(
         `https://whiskandwonder.up.railway.app/reservations/${reservationId}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
-
       const data = await response.json();
 
       setReservation(data);
@@ -84,19 +78,15 @@ export default function AdminReservationDetailPage() {
       setSaving(true);
       setUpdated(false);
 
-      const token = getToken();
-
       const response = await fetch(
         `https://whiskandwonder.up.railway.app/reservations/${reservationId}`,
         {
           method: "PATCH",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            status: selectedStatus,
-          }),
+          body: JSON.stringify({ status: selectedStatus }),
         },
       );
 

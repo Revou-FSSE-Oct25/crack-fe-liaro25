@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { getToken } from "@/lib/auth";
 import { Table } from "@/types";
 
 export default function AdminTablesPage() {
@@ -16,14 +15,10 @@ export default function AdminTablesPage() {
 
   async function fetchTables() {
     try {
-      const token = getToken();
-
       const response = await fetch(
         "https://whiskandwonder.up.railway.app/tables",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
 
