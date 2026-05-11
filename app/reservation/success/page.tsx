@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function ReservationSuccessPage() {
+function ReservationSuccessContent() {
   const searchParams = useSearchParams();
 
   const fullCode = searchParams.get("code") || "";
@@ -24,7 +25,7 @@ export default function ReservationSuccessPage() {
           <p className="text-sm text-gray-500 mb-2">Reservation Code</p>
 
           {fullCode ? (
-            <div className="text-3xl font-bold tracking-widest">
+            <div className="text-3xl font-bold tracking-widest flex items-center justify-center">
               <span className="text-gray-500">WHISK-</span>
               <span>{displayCode}</span>
             </div>
@@ -47,5 +48,13 @@ export default function ReservationSuccessPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ReservationSuccessPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen p-8">Loading...</main>}>
+      <ReservationSuccessContent />
+    </Suspense>
   );
 }
