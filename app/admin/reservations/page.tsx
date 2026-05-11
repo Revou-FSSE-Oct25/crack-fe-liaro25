@@ -35,11 +35,7 @@ export default function AdminReservationsPage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error("Failed request");
-      }
-
-      setReservations(Array.isArray(data) ? data : []);
+      setReservations(data);
     } catch (error) {
       console.error("Failed to fetch reservations:", error);
     } finally {
