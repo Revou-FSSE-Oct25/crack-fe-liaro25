@@ -79,6 +79,17 @@ export interface Menu {
   category: string;
   price: string;
   status: string;
+  description?: string | null;
+  imageUrl?: string | null;
+}
+
+export interface MenuPackage {
+  id: string;
+  name: string;
+  price: string;
+  status: string;
+  description?: string | null;
+  imageUrl?: string | null;
 }
 
 export interface Order {
@@ -116,8 +127,17 @@ export interface Order {
       category: string;
       price: string;
       status: string;
+      description?: string | null;
+      imageUrl?: string | null;
     } | null;
-    menuPackage?: unknown | null;
+    menuPackage?: {
+      id: string;
+      name: string;
+      price: string;
+      status: string;
+      description?: string | null;
+      imageUrl?: string | null;
+    } | null;
   }[];
 
   payments?: Payment[];
