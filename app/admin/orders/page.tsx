@@ -93,7 +93,7 @@ export default function AdminOrdersPage() {
       setMessage("");
       setError("");
 
-      const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
         method: "PATCH",
         credentials: "include",
         headers: {
