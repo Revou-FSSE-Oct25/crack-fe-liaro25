@@ -1,0 +1,312 @@
+.
+├── .DS_Store
+├── .env.local
+├── .git
+│   ├── COMMIT_EDITMSG
+│   ├── FETCH_HEAD
+│   ├── HEAD
+│   ├── ORIG_HEAD
+│   ├── config
+│   ├── description
+│   ├── hooks
+│   │   ├── applypatch-msg.sample
+│   │   ├── commit-msg.sample
+│   │   ├── fsmonitor-watchman.sample
+│   │   ├── post-update.sample
+│   │   ├── pre-applypatch.sample
+│   │   ├── pre-commit.sample
+│   │   ├── pre-merge-commit.sample
+│   │   ├── pre-push.sample
+│   │   ├── pre-rebase.sample
+│   │   ├── pre-receive.sample
+│   │   ├── prepare-commit-msg.sample
+│   │   ├── push-to-checkout.sample
+│   │   ├── sendemail-validate.sample
+│   │   └── update.sample
+│   ├── index
+│   ├── index 2
+│   ├── info
+│   │   └── exclude
+│   ├── logs
+│   │   ├── HEAD
+│   │   └── refs
+│   ├── objects
+│   │   ├── 00
+│   │   ├── 01
+│   │   ├── 02
+│   │   ├── 03
+│   │   ├── 04
+│   │   ├── 05
+│   │   ├── 06
+│   │   ├── 08
+│   │   ├── 09
+│   │   ├── 0b
+│   │   ├── 0d
+│   │   ├── 0e
+│   │   ├── 0f
+│   │   ├── 12
+│   │   ├── 13
+│   │   ├── 14
+│   │   ├── 15
+│   │   ├── 17
+│   │   ├── 18
+│   │   ├── 19
+│   │   ├── 1b
+│   │   ├── 1d
+│   │   ├── 1e
+│   │   ├── 1f
+│   │   ├── 20
+│   │   ├── 21
+│   │   ├── 22
+│   │   ├── 23
+│   │   ├── 25
+│   │   ├── 26
+│   │   ├── 27
+│   │   ├── 28
+│   │   ├── 2a
+│   │   ├── 2b
+│   │   ├── 2d
+│   │   ├── 2f
+│   │   ├── 30
+│   │   ├── 31
+│   │   ├── 34
+│   │   ├── 37
+│   │   ├── 39
+│   │   ├── 3a
+│   │   ├── 3b
+│   │   ├── 3d
+│   │   ├── 3e
+│   │   ├── 3f
+│   │   ├── 40
+│   │   ├── 41
+│   │   ├── 43
+│   │   ├── 44
+│   │   ├── 45
+│   │   ├── 46
+│   │   ├── 48
+│   │   ├── 4a
+│   │   ├── 4c
+│   │   ├── 4e
+│   │   ├── 4f
+│   │   ├── 51
+│   │   ├── 52
+│   │   ├── 53
+│   │   ├── 56
+│   │   ├── 57
+│   │   ├── 58
+│   │   ├── 5a
+│   │   ├── 5b
+│   │   ├── 5c
+│   │   ├── 5d
+│   │   ├── 5e
+│   │   ├── 5f
+│   │   ├── 61
+│   │   ├── 62
+│   │   ├── 63
+│   │   ├── 64
+│   │   ├── 65
+│   │   ├── 69
+│   │   ├── 6a
+│   │   ├── 6b
+│   │   ├── 6d
+│   │   ├── 6e
+│   │   ├── 6f
+│   │   ├── 71
+│   │   ├── 72
+│   │   ├── 73
+│   │   ├── 74
+│   │   ├── 76
+│   │   ├── 77
+│   │   ├── 78
+│   │   ├── 79
+│   │   ├── 7c
+│   │   ├── 7d
+│   │   ├── 7e
+│   │   ├── 7f
+│   │   ├── 80
+│   │   ├── 81
+│   │   ├── 84
+│   │   ├── 86
+│   │   ├── 87
+│   │   ├── 88
+│   │   ├── 89
+│   │   ├── 8b
+│   │   ├── 8d
+│   │   ├── 8e
+│   │   ├── 8f
+│   │   ├── 91
+│   │   ├── 93
+│   │   ├── 94
+│   │   ├── 95
+│   │   ├── 96
+│   │   ├── 97
+│   │   ├── 98
+│   │   ├── 9a
+│   │   ├── 9b
+│   │   ├── 9c
+│   │   ├── 9e
+│   │   ├── 9f
+│   │   ├── a0
+│   │   ├── a1
+│   │   ├── a2
+│   │   ├── a3
+│   │   ├── a5
+│   │   ├── a6
+│   │   ├── a8
+│   │   ├── a9
+│   │   ├── aa
+│   │   ├── ab
+│   │   ├── ad
+│   │   ├── ae
+│   │   ├── af
+│   │   ├── b1
+│   │   ├── b2
+│   │   ├── b3
+│   │   ├── b4
+│   │   ├── b6
+│   │   ├── b7
+│   │   ├── b9
+│   │   ├── ba
+│   │   ├── bb
+│   │   ├── bd
+│   │   ├── be
+│   │   ├── bf
+│   │   ├── c0
+│   │   ├── c3
+│   │   ├── c4
+│   │   ├── c5
+│   │   ├── c6
+│   │   ├── c7
+│   │   ├── c8
+│   │   ├── c9
+│   │   ├── ca
+│   │   ├── cb
+│   │   ├── cc
+│   │   ├── d2
+│   │   ├── d3
+│   │   ├── d4
+│   │   ├── d5
+│   │   ├── d6
+│   │   ├── d9
+│   │   ├── da
+│   │   ├── db
+│   │   ├── dc
+│   │   ├── dd
+│   │   ├── de
+│   │   ├── df
+│   │   ├── e0
+│   │   ├── e2
+│   │   ├── e3
+│   │   ├── e6
+│   │   ├── e7
+│   │   ├── e8
+│   │   ├── e9
+│   │   ├── ea
+│   │   ├── eb
+│   │   ├── ec
+│   │   ├── ed
+│   │   ├── ee
+│   │   ├── ef
+│   │   ├── f0
+│   │   ├── f3
+│   │   ├── f4
+│   │   ├── f5
+│   │   ├── f6
+│   │   ├── f7
+│   │   ├── f8
+│   │   ├── fc
+│   │   ├── fd
+│   │   ├── fe
+│   │   ├── ff
+│   │   ├── info
+│   │   └── pack
+│   ├── packed-refs
+│   └── refs
+│       ├── heads
+│       ├── remotes
+│       └── tags
+├── .gitignore
+├── AGENTS.md
+├── CLAUDE.md
+├── README.md
+├── app
+│   ├── .DS_Store
+│   ├── admin
+│   │   ├── .DS_Store
+│   │   ├── menus
+│   │   ├── orders
+│   │   ├── page.tsx
+│   │   ├── payments
+│   │   ├── reservations
+│   │   └── tables
+│   ├── customer
+│   │   ├── orders
+│   │   ├── page.tsx
+│   │   ├── payments
+│   │   ├── profile
+│   │   └── reservations
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── login
+│   │   └── page.tsx
+│   ├── page.tsx
+│   ├── register
+│   │   └── page.tsx
+│   └── reservation
+│       ├── .DS_Store
+│       ├── check
+│       ├── page.tsx
+│       └── success
+├── components
+│   ├── .DS_Store
+│   ├── forms
+│   ├── home
+│   │   ├── AboutPreview.tsx
+│   │   ├── FeatureStrip.tsx
+│   │   ├── Footer.tsx
+│   │   ├── GalleryPreview.tsx
+│   │   ├── HeroSection.tsx
+│   │   ├── MenuPreview.tsx
+│   │   └── ReservationCTA.tsx
+│   ├── layout
+│   │   ├── Navbar.tsx
+│   │   └── ProtectedRoute.tsx
+│   └── ui
+│       ├── Button.tsx
+│       ├── Card.tsx
+│       ├── Input.tsx
+│       └── StatusBadge.tsx
+├── eslint.config.mjs
+├── hooks
+│   └── useAuth.ts
+├── lib
+│   ├── api.ts
+│   ├── auth.ts
+│   └── reservation.ts
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── proxy.ts
+├── public
+│   ├── .DS_Store
+│   ├── backgroundFE.png
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── images
+│   │   ├── .DS_Store
+│   │   ├── about-preview.webp
+│   │   ├── logo.png
+│   │   ├── logo.svg
+│   │   └── menu
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── structure.txt
+├── tsconfig.json
+└── types
+    └── index.ts
+
+228 directories, 82 files
