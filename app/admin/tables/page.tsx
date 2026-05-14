@@ -1,14 +1,36 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Cinzel, Great_Vibes, Inter } from "next/font/google";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import Footer from "@/components/home/Footer";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import StatusBadge from "@/components/ui/StatusBadge";
 import { Reservation, Table } from "@/types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://whiskandwonder.up.railway.app";
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 function getDateOnly(dateString: string) {
   return new Date(dateString).toISOString().split("T")[0];
@@ -19,6 +41,8 @@ function todayDate() {
 }
 
 export default function AdminTablesPage() {
+  const router = useRouter();
+
   const [tables, setTables] = useState<Table[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedDate, setSelectedDate] = useState(todayDate());
@@ -28,6 +52,8 @@ export default function AdminTablesPage() {
   useEffect(() => {
     async function fetchData() {
       try {
+        setLoading(true);
+
         const [tablesResponse, reservationsResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/tables`, {
             credentials: "include",
@@ -96,136 +122,171 @@ export default function AdminTablesPage() {
 
   return (
     <ProtectedRoute allowedRoles={["ADMIN"]}>
-      <main className="min-h-screen bg-[#f8f3ec] px-6 py-10">
-        <section className="mx-auto max-w-7xl">
-          <div className="mb-8">
-            <Link
-              href="/admin"
-              className="inline-flex items-center text-sm font-medium text-[#b8895b] hover:underline"
-            >
-              ← Back to Dashboard
-            </Link>
+      <main
+        className={`${inter.className} relative min-h-screen overflow-hidden bg-[#FFF8F1] px-6 py-10 text-[#4A3428] sm:px-10 lg:px-16`}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[url('/images/about-preview.webp')] bg-cover bg-center opacity-[0.5]"
+          aria-hidden="true"
+        />
 
-            <p className="mt-4 text-sm font-medium uppercase tracking-[0.3em] text-[#b8895b]">
-              Admin
-            </p>
-
-            <h1 className="mt-2 text-3xl font-bold text-[#2f241d]">Tables</h1>
-
-            <p className="mt-2 text-sm text-[#6f6258]">
-              View table availability by reservation date.
-            </p>
+        <section className="relative z-10 mx-auto max-w-7xl">
+          <div className="mb-5 flex justify-end">
+            <Button variant="outline" onClick={() => router.push("/admin")}>
+              ← Back to Admin
+            </Button>
           </div>
 
-          <div className="mb-6 grid gap-4 rounded-2xl border border-[#ead8c5] bg-white p-5 shadow-sm md:grid-cols-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[#2f241d]">
-                Reservation Date
-              </label>
+          <Card className="mb-8 bg-white/65">
+            <p
+              className={`${cinzel.className} text-xs font-semibold uppercase tracking-[0.4em] text-[#8FBFBE]`}
+            >
+              Whisk & Wonder Admin
+            </p>
 
-              <input
+            <h1
+              className={`${cinzel.className} mt-4 text-4xl font-semibold uppercase leading-tight tracking-wider text-[#315F5B] sm:text-5xl`}
+            >
+              Table Availability
+            </h1>
+
+            <p
+              className={`${greatVibes.className} mt-3 text-3xl text-[#E8B7C8] sm:text-4xl`}
+            >
+              arranged for graceful dining
+            </p>
+
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[#7D6E66]">
+              View table availability by reservation date, monitor booked
+              guests, and check which tables are assigned to upcoming afternoon
+              tea reservations.
+            </p>
+          </Card>
+
+          <Card className="mb-8 bg-white/70">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Input
+                label="Reservation Date"
                 type="date"
                 value={selectedDate}
                 onChange={(event) => setSelectedDate(event.target.value)}
-                className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none transition focus:border-[#b8895b]"
               />
-            </div>
 
+              <div>
+                <label
+                  className={`${cinzel.className} mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-[#C8A86A]`}
+                >
+                  Table Status
+                </label>
+
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                  className="w-full rounded-full border border-[#EBDDD1] bg-[#FFF8F1] px-5 py-3 text-sm capitalize text-[#315F5B] outline-none transition focus:border-[#8FBFBE] focus:ring-2 focus:ring-[#8FBFBE]/20"
+                >
+                  <option value="all">All tables</option>
+                  <option value="available">Available only</option>
+                  <option value="booked">Booked only</option>
+                </select>
+              </div>
+
+              <div className="rounded-4xl border border-[#C8A86A]/25 bg-[#FFF3C4]/70 p-5 shadow-lg shadow-amber-100/40">
+                <p
+                  className={`${cinzel.className} text-xs font-semibold uppercase tracking-[0.25em] text-[#8A6A24]/70`}
+                >
+                  Booked Guests
+                </p>
+
+                <p className="mt-3 text-4xl font-semibold text-[#9A6A00]">
+                  {totalBookedGuests}
+                </p>
+              </div>
+
+              <div className="rounded-4xl border border-[#8FBFBE]/25 bg-[#DCEFF0]/70 p-5 shadow-lg shadow-teal-100/40">
+                <p
+                  className={`${cinzel.className} text-xs font-semibold uppercase tracking-[0.25em] text-[#315F5B]/70`}
+                >
+                  Tables
+                </p>
+
+                <p className="mt-3 text-sm font-semibold leading-7 text-[#315F5B]">
+                  {bookedTablesCount} booked
+                  <br />
+                  {availableTablesCount} available
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#2f241d]">
-                Table Status
-              </label>
-
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none transition focus:border-[#b8895b]"
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-[0.35em] text-[#C8A86A]`}
               >
-                <option value="all">All tables</option>
-                <option value="available">Available only</option>
-                <option value="booked">Booked only</option>
-              </select>
+                Dining Layout
+              </p>
+
+              <h2
+                className={`${cinzel.className} mt-2 text-2xl font-semibold uppercase tracking-[0.04em] text-[#315F5B]`}
+              >
+                Tables on Selected Date
+              </h2>
             </div>
 
-            <div className="rounded-xl bg-[#f8f3ec] p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#b8895b]">
-                Booked Guests
-              </p>
-              <p className="mt-2 text-2xl font-bold text-[#2f241d]">
-                {totalBookedGuests}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-[#f8f3ec] p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#b8895b]">
-                Tables
-              </p>
-              <p className="mt-2 text-sm font-semibold text-[#2f241d]">
-                {bookedTablesCount} booked / {availableTablesCount} available
-              </p>
-            </div>
+            <StatusBadge status={`${filteredTableCards.length} tables`} />
           </div>
 
-          {loading && (
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              Loading tables...
-            </div>
-          )}
+          {loading && <Card>Loading tables...</Card>}
 
           {!loading && filteredTableCards.length === 0 && (
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              No tables found for this filter.
-            </div>
+            <Card>No tables found for this filter.</Card>
           )}
 
           {!loading && filteredTableCards.length > 0 && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredTableCards.map(({ table, isBooked, reservations }) => (
-                <div
-                  key={table.id}
-                  className="rounded-2xl border border-[#ead8c5] bg-white p-6 shadow-sm"
-                >
+                <Card key={table.id} className="h-full">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-xl font-semibold text-[#2f241d]">
-                        {table.name}
-                      </h2>
+                      <p
+                        className={`${cinzel.className} text-xs font-semibold uppercase tracking-[0.25em] text-[#C8A86A]`}
+                      >
+                        Table
+                      </p>
 
-                      <p className="mt-2 text-sm text-[#6f6258]">
+                      <h3
+                        className={`${cinzel.className} mt-2 text-2xl font-semibold uppercase tracking-[0.04em] text-[#315F5B]`}
+                      >
+                        {table.name}
+                      </h3>
+
+                      <p className="mt-2 text-sm text-[#7D6E66]">
                         Capacity: {table.capacity} guests
                       </p>
                     </div>
 
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
-                        isBooked
-                          ? "bg-[#f5d6d6] text-[#8a2f2f]"
-                          : "bg-[#e6f2dd] text-[#3f6f2f]"
-                      }`}
-                    >
-                      {isBooked ? "Booked" : "Available"}
-                    </span>
+                    <StatusBadge status={isBooked ? "booked" : "available"} />
                   </div>
 
                   {isBooked ? (
-                    <div className="mt-5 space-y-3 border-t border-[#ead8c5] pt-4">
+                    <div className="mt-6 space-y-3 border-t border-[#EBDDD1] pt-5">
                       {reservations.map((reservation) => (
                         <div
                           key={reservation.id}
-                          className="rounded-xl bg-[#f8f3ec] p-4"
+                          className="rounded-3xl bg-[#FFF8F1]/85 p-4"
                         >
                           <Link
                             href={`/admin/reservations/${reservation.id}`}
-                            className="font-semibold text-[#b8895b] hover:underline"
+                            className={`${cinzel.className} text-sm font-semibold uppercase tracking-[0.08em] text-[#C8A86A] transition hover:text-[#315F5B]`}
                           >
                             {reservation.reservationCode}
                           </Link>
 
-                          <p className="mt-2 text-sm text-[#2f241d]">
+                          <p className="mt-2 font-semibold text-[#315F5B]">
                             {reservation.guestName}
                           </p>
 
-                          <p className="mt-1 text-sm text-[#6f6258]">
+                          <p className="mt-1 text-sm leading-6 text-[#7D6E66]">
                             {reservation.startTime}
                             {reservation.endTime
                               ? ` - ${reservation.endTime}`
@@ -233,22 +294,26 @@ export default function AdminTablesPage() {
                             · {reservation.guestCount} guests
                           </p>
 
-                          <p className="mt-1 text-xs capitalize text-[#6f6258]">
-                            Status: {reservation.status}
-                          </p>
+                          <div className="mt-3">
+                            <StatusBadge status={reservation.status} />
+                          </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="mt-5 rounded-xl bg-[#f8f3ec] p-4 text-sm text-[#6f6258]">
-                      No reservation assigned to this table on selected date.
+                    <div className="mt-6 rounded-3xl bg-[#DDF2E3]/70 p-4 text-sm leading-7 text-[#2F6B45]">
+                      This table is available for the selected date.
                     </div>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </section>
+
+        <div className="relative z-10 mt-12">
+          <Footer />
+        </div>
       </main>
     </ProtectedRoute>
   );

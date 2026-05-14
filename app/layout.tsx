@@ -1,7 +1,7 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
-import { Homemade_Apple, Inria_Serif, Inter } from "next/font/google";
+import { Cinzel, Great_Vibes, Inter } from "next/font/google";
 
 import Navbar from "@/components/layout/Navbar";
 
@@ -10,16 +10,16 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const inria = Inria_Serif({
+const cinzel = Cinzel({
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
-  variable: "--font-inria",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-cinzel",
 });
 
-const homemadeApple = Homemade_Apple({
+const greatVibes = Great_Vibes({
   subsets: ["latin"],
   weight: ["400"],
-  variable: "--font-script",
+  variable: "--font-great-vibes",
 });
 
 export const metadata: Metadata = {
@@ -35,8 +35,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        suppressHydrationWarning={true}
-        className={`${inter.variable} ${inria.variable} ${homemadeApple.variable} font-sans antialiased`}
+        suppressHydrationWarning
+        className={`${inter.variable} ${cinzel.variable} ${greatVibes.variable} font-sans antialiased`}
       >
         <Navbar />
         {children}

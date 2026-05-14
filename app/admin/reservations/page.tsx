@@ -2,11 +2,34 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Cinzel, Great_Vibes, Inter } from "next/font/google";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import Footer from "@/components/home/Footer";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import StatusBadge from "@/components/ui/StatusBadge";
+
 import { Reservation } from "@/types";
 
 const API_URL = "https://whiskandwonder.up.railway.app";
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 const statusOptions = ["all", "pending", "confirmed", "cancelled", "completed"];
 
@@ -18,60 +41,47 @@ function formatDate(dateString: string) {
   });
 }
 
-function getStatusBadgeClass(status: string) {
-  switch (status) {
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    case "confirmed":
-      return "bg-green-100 text-green-800";
-    case "cancelled":
-      return "bg-red-100 text-red-800";
-    case "completed":
-      return "bg-blue-100 text-blue-800";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
 function getReservationDateValue(dateString: string) {
   return new Date(dateString).toISOString().split("T")[0];
 }
 
+function getMonthValue(dateString: string) {
+  return new Date(dateString).toISOString().slice(0, 7);
+}
+
+function formatMonthLabel(monthValue: string) {
+  if (monthValue === "all") return "All months";
+
+  return new Date(`${monthValue}-01`).toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+  });
+}
+
 export default function AdminReservationsPage() {
+  const router = useRouter();
+
   const [reservations, setReservations] = useState<Reservation[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const [search, setSearch] = useState("");
-  const [date, setDate] = useState("");
-  const [status, setStatus] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [updatedId, setUpdatedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchReservations();
-  }, [search, date, status]);
 
   async function fetchReservations() {
     try {
       setLoading(true);
       setError("");
 
-      const params = new URLSearchParams();
-
-      if (search.trim()) params.append("search", search.trim());
-      if (date) params.append("date", date);
-      if (status !== "all") params.append("status", status);
-
-      const queryString = params.toString();
-
-      const response = await fetch(
-        `${API_URL}/reservations${queryString ? `?${queryString}` : ""}`,
-        {
-          credentials: "include",
-        },
-      );
+      const response = await fetch(`${API_URL}/reservations`, {
+        credentials: "include",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch reservations");
@@ -81,18 +91,34 @@ export default function AdminReservationsPage() {
 
       setReservations(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Failed to fetch reservations:", error);
-      setError("Failed to load reservations. Please try again.");
-      setReservations([]);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch reservations",
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  const filteredReservations = useMemo(() => {
-    return reservations.filter((reservation) => {
-      const keyword = search.toLowerCase();
+  useEffect(() => {
+    fetchReservations();
+  }, []);
 
+  const availableMonths = useMemo(() => {
+    const months = Array.from(
+      new Set(
+        reservations
+          .filter((reservation) => reservation.reservationDate)
+          .map((reservation) => getMonthValue(reservation.reservationDate)),
+      ),
+    ).sort((a, b) => b.localeCompare(a));
+
+    return ["all", ...months];
+  }, [reservations]);
+
+  const filteredReservations = useMemo(() => {
+    const keyword = search.toLowerCase();
+
+    return reservations.filter((reservation) => {
       const matchesSearch =
         !keyword ||
         reservation.guestName?.toLowerCase().includes(keyword) ||
@@ -101,34 +127,49 @@ export default function AdminReservationsPage() {
         reservation.reservationCode?.toLowerCase().includes(keyword);
 
       const matchesDate =
-        !date || getReservationDateValue(reservation.reservationDate) === date;
+        !dateFilter ||
+        getReservationDateValue(reservation.reservationDate) === dateFilter;
 
       const matchesStatus =
-        status === "all" || reservation.status?.toLowerCase() === status;
+        statusFilter === "all" ||
+        reservation.status?.toLowerCase() === statusFilter;
 
-      return matchesSearch && matchesDate && matchesStatus;
+      const matchesMonth =
+        monthFilter === "all" ||
+        getMonthValue(reservation.reservationDate) === monthFilter;
+
+      return matchesSearch && matchesDate && matchesStatus && matchesMonth;
     });
-  }, [reservations, search, date, status]);
+  }, [reservations, search, dateFilter, statusFilter, monthFilter]);
 
   const summary = useMemo(() => {
     return {
       total: filteredReservations.length,
+
       confirmed: filteredReservations.filter(
         (reservation) => reservation.status === "confirmed",
       ).length,
+
       pending: filteredReservations.filter(
         (reservation) => reservation.status === "pending",
       ).length,
-      cancelled: filteredReservations.filter(
-        (reservation) => reservation.status === "cancelled",
+
+      completed: filteredReservations.filter(
+        (reservation) => reservation.status === "completed",
       ).length,
+
+      guests: filteredReservations.reduce(
+        (total, reservation) => total + Number(reservation.guestCount || 0),
+        0,
+      ),
     };
   }, [filteredReservations]);
 
   async function updateReservationStatus(id: string, newStatus: string) {
     try {
       setUpdatingId(id);
-      setUpdatedId(null);
+      setMessage("");
+      setError("");
 
       const response = await fetch(`${API_URL}/reservations/${id}`, {
         method: "PATCH",
@@ -136,11 +177,13 @@ export default function AdminReservationsPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update reservation status");
+        throw new Error("Failed to update reservation");
       }
 
       setReservations((prevReservations) =>
@@ -151,14 +194,11 @@ export default function AdminReservationsPage() {
         ),
       );
 
-      setUpdatedId(id);
-
-      setTimeout(() => {
-        setUpdatedId(null);
-      }, 2000);
+      setMessage("Reservation updated successfully.");
     } catch (error) {
-      console.error("Failed to update reservation status:", error);
-      alert("Failed to update reservation status");
+      setError(
+        error instanceof Error ? error.message : "Failed to update reservation",
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -166,181 +206,290 @@ export default function AdminReservationsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["ADMIN"]}>
-      <main className="min-h-screen bg-[#f8f3ec] px-4 py-8 md:px-6 md:py-10">
-        <section className="mx-auto max-w-7xl">
-          <div className="mb-8">
-            <Link
-              href="/admin"
-              className="inline-flex items-center text-sm font-medium text-[#b8895b] hover:underline"
-            >
-              ← Back to Dashboard
-            </Link>
+      <main
+        className={`${inter.className} relative min-h-screen overflow-hidden bg-[#FFF8F1] px-6 py-10 text-[#4A3428] sm:px-10 lg:px-16`}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[url('/images/about-preview.webp')] bg-cover bg-center opacity-50"
+          aria-hidden="true"
+        />
 
-            <p className="mt-4 text-sm font-medium uppercase tracking-[0.3em] text-[#b8895b]">
-              Admin
+        <section className="relative z-10 mx-auto max-w-7xl">
+          <div className="mb-5 flex justify-end">
+            <Button variant="outline" onClick={() => router.push("/admin")}>
+              ← Back to Admin
+            </Button>
+          </div>
+
+          <Card className="mb-8 bg-white/65">
+            <p
+              className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#8FBFBE]`}
+            >
+              Whisk & Wonder Admin
             </p>
 
-            <h1 className="mt-2 text-3xl font-bold text-[#2f241d]">
-              Reservations
+            <h1
+              className={`${cinzel.className} mt-4 text-4xl font-semibold uppercase leading-tight tracking-wider text-[#315F5B] sm:text-5xl`}
+            >
+              Reservation Management
             </h1>
 
-            <p className="mt-2 text-sm text-[#6f6258]">
-              Manage customer reservations, table assignments, and reservation
-              statuses.
+            <p
+              className={`${greatVibes.className} mt-3 text-3xl text-[#E8B7C8] sm:text-4xl`}
+            >
+              organized with warmth and precision
             </p>
-          </div>
 
-          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <p className="text-sm text-[#6f6258]">Total Reservations</p>
-              <p className="mt-2 text-3xl font-bold text-[#2f241d]">
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[#7D6E66]">
+              Manage guest reservations, table scheduling, reservation statuses,
+              and daily booking flow from one elegant admin workspace.
+            </p>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/admin/reservations/new">
+                <Button variant="primary">Create Reservation</Button>
+              </Link>
+
+              <Button variant="outline" onClick={fetchReservations}>
+                Refresh Data
+              </Button>
+            </div>
+          </Card>
+
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <Card className="bg-[#DCEFF0]/75">
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-wider text-[#315F5B]/70`}
+              >
+                Total Reservations
+              </p>
+
+              <p className="mt-3 text-4xl font-semibold text-[#315F5B]">
                 {summary.total}
               </p>
-            </div>
+            </Card>
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <p className="text-sm text-[#6f6258]">Confirmed</p>
-              <p className="mt-2 text-3xl font-bold text-green-700">
+            <Card className="bg-[#EAF6EF]/80">
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-wider text-[#315F5B]/70`}
+              >
+                Confirmed
+              </p>
+
+              <p className="mt-3 text-4xl font-semibold text-[#2F6B45]">
                 {summary.confirmed}
               </p>
-            </div>
+            </Card>
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <p className="text-sm text-[#6f6258]">Pending</p>
-              <p className="mt-2 text-3xl font-bold text-yellow-700">
+            <Card className="bg-[#FFF3C4]/75">
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-wider text-[#8A6A24]/70`}
+              >
+                Pending
+              </p>
+
+              <p className="mt-3 text-4xl font-semibold text-[#9A6A00]">
                 {summary.pending}
               </p>
-            </div>
+            </Card>
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <p className="text-sm text-[#6f6258]">Cancelled</p>
-              <p className="mt-2 text-3xl font-bold text-red-700">
-                {summary.cancelled}
+            <Card className="bg-[#FBE1EA]/75">
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-wider text-[#9B4F68]/70`}
+              >
+                Completed
               </p>
-            </div>
+
+              <p className="mt-3 text-4xl font-semibold text-[#9B4F68]">
+                {summary.completed}
+              </p>
+            </Card>
+
+            <Card className="bg-[#F6EEE7]/80">
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-wider text-[#8A6A24]/70`}
+              >
+                Total Guests
+              </p>
+
+              <p className="mt-3 text-4xl font-semibold text-[#8A6A24]">
+                {summary.guests}
+              </p>
+            </Card>
           </div>
 
-          <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
-            <div className="grid gap-4 md:grid-cols-3">
-              <input
-                type="text"
+          <Card className="mb-8 bg-white/70">
+            <div className="grid gap-4 lg:grid-cols-[1fr_200px_200px_200px_auto] lg:items-center">
+              <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search name, email, phone, or code..."
-                className="rounded-xl border border-[#ead8c5] bg-[#fffaf5] px-4 py-3 text-sm text-[#2f241d] outline-none focus:border-[#b8895b]"
               />
 
               <input
                 type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-                className="rounded-xl border border-[#ead8c5] bg-[#fffaf5] px-4 py-3 text-sm text-[#2f241d] outline-none focus:border-[#b8895b]"
+                value={dateFilter}
+                onChange={(event) => setDateFilter(event.target.value)}
+                className="w-full rounded-full border border-[#EBDDD1] bg-[#FFF8F1] px-5 py-3 text-sm text-[#315F5B] outline-none transition focus:border-[#8FBFBE] focus:ring-2 focus:ring-[#8FBFBE]/20"
               />
 
               <select
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
-                className="rounded-xl border border-[#ead8c5] bg-[#fffaf5] px-4 py-3 text-sm capitalize text-[#2f241d] outline-none focus:border-[#b8895b]"
+                value={monthFilter}
+                onChange={(event) => setMonthFilter(event.target.value)}
+                className="w-full rounded-full border border-[#EBDDD1] bg-[#FFF8F1] px-5 py-3 text-sm text-[#315F5B] outline-none transition focus:border-[#8FBFBE] focus:ring-2 focus:ring-[#8FBFBE]/20"
               >
-                {statusOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
+                {availableMonths.map((month) => (
+                  <option key={month} value={month}>
+                    {formatMonthLabel(month)}
                   </option>
                 ))}
               </select>
+
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="w-full rounded-full border border-[#EBDDD1] bg-[#FFF8F1] px-5 py-3 text-sm capitalize text-[#315F5B] outline-none transition focus:border-[#8FBFBE] focus:ring-2 focus:ring-[#8FBFBE]/20"
+              >
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status === "all" ? "All statuses" : status}
+                  </option>
+                ))}
+              </select>
+
+              <Button variant="outline" onClick={fetchReservations}>
+                Refresh
+              </Button>
             </div>
+          </Card>
+
+          {message && (
+            <Card className="mb-4 bg-[#DDF2E3]/90 text-sm font-semibold text-[#2F6B45]">
+              {message}
+            </Card>
+          )}
+
+          {error && (
+            <Card className="mb-4 bg-[#F8D7DA]/90 text-sm font-semibold text-[#9B2C2C]">
+              {error}
+            </Card>
+          )}
+
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+              >
+                Reservation Records
+              </p>
+
+              <h2
+                className={`${cinzel.className} mt-2 text-2xl font-semibold uppercase tracking-wider text-[#315F5B]`}
+              >
+                Guest Reservation Overview
+              </h2>
+
+              <p className="mt-2 text-sm text-[#7D6E66]">
+                Showing {formatMonthLabel(monthFilter)}
+              </p>
+            </div>
+
+            <StatusBadge
+              status={`${filteredReservations.length} reservations`}
+            />
           </div>
 
-          {loading && (
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              Loading reservations...
-            </div>
-          )}
+          {loading && <Card>Loading reservations...</Card>}
 
-          {!loading && error && (
-            <div className="rounded-2xl bg-red-50 p-6 text-sm font-medium text-red-700 shadow-sm">
-              {error}
-            </div>
-          )}
-
-          {!loading && !error && filteredReservations.length === 0 && (
-            <div className="rounded-2xl bg-white p-6 text-[#6f6258] shadow-sm">
+          {!loading && filteredReservations.length === 0 && (
+            <Card className="text-center text-[#7D6E66]">
               No reservations found.
-            </div>
+            </Card>
           )}
 
-          {!loading && !error && filteredReservations.length > 0 && (
-            <div className="space-y-4">
+          {!loading && filteredReservations.length > 0 && (
+            <div className="space-y-5">
               {filteredReservations.map((reservation) => (
-                <div
-                  key={reservation.id}
-                  className="rounded-2xl bg-white p-5 shadow-sm"
-                >
+                <Card key={reservation.id} className="bg-white/75">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
+                      <p
+                        className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+                      >
+                        Reservation Code
+                      </p>
+
                       <Link
                         href={`/admin/reservations/${reservation.id}`}
-                        className="text-lg font-bold text-[#b8895b] hover:underline"
+                        className={`${cinzel.className} mt-2 block text-2xl font-semibold uppercase tracking-wider text-[#315F5B] transition hover:text-[#C8A86A]`}
                       >
                         {reservation.reservationCode}
                       </Link>
 
-                      <p className="mt-1 font-semibold text-[#2f241d]">
+                      <p className="mt-3 text-sm leading-7 text-[#7D6E66]">
                         {reservation.guestName}
-                      </p>
-
-                      <p className="text-sm text-[#6f6258]">
+                        <br />
                         {reservation.guestEmail}
-                      </p>
-
-                      <p className="text-sm text-[#6f6258]">
+                        <br />
                         {reservation.guestPhone || "-"}
                       </p>
                     </div>
 
-                    <span
-                      className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${getStatusBadgeClass(
-                        reservation.status,
-                      )}`}
-                    >
-                      {reservation.status}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <StatusBadge status={reservation.status} />
+
+                      {reservation.order?.status && (
+                        <StatusBadge status={reservation.order.status} />
+                      )}
+                    </div>
                   </div>
 
-                  <div className="mt-5 grid gap-4 text-sm text-[#2f241d] sm:grid-cols-2 lg:grid-cols-5">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#9b8a7b]">
-                        Date
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                      <p
+                        className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                      >
+                        Reservation Date
                       </p>
-                      <p className="mt-1 font-medium">
+
+                      <p className="mt-2 font-semibold text-[#315F5B]">
                         {formatDate(reservation.reservationDate)}
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#9b8a7b]">
+                    <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                      <p
+                        className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                      >
                         Time
                       </p>
-                      <p className="mt-1 font-medium">
+
+                      <p className="mt-2 font-semibold text-[#315F5B]">
                         {reservation.startTime}
                         {reservation.endTime ? ` - ${reservation.endTime}` : ""}
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#9b8a7b]">
-                        Guests
+                    <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                      <p
+                        className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                      >
+                        Guest Count
                       </p>
-                      <p className="mt-1 font-medium">
+
+                      <p className="mt-2 font-semibold text-[#315F5B]">
                         {reservation.guestCount}
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#9b8a7b]">
-                        Tables
+                    <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                      <p
+                        className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                      >
+                        Assigned Tables
                       </p>
-                      <p className="mt-1 font-medium">
+
+                      <p className="mt-2 font-semibold text-[#315F5B]">
                         {reservation.tables && reservation.tables.length > 0
                           ? reservation.tables
                               .map((item) => item.table.name)
@@ -349,82 +498,65 @@ export default function AdminReservationsPage() {
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#9b8a7b]">
+                    <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                      <p
+                        className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                      >
                         Order Status
                       </p>
-                      <p className="mt-1 font-medium capitalize">
+
+                      <p className="mt-2 font-semibold capitalize text-[#315F5B]">
                         {reservation.order?.status || "-"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-col gap-3 border-t border-[#f1e5d8] pt-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      <Link
-                        href={`/admin/reservations/${reservation.id}`}
-                        className="rounded-xl border border-[#ead8c5] px-4 py-2 text-sm font-medium text-[#2f241d] hover:bg-[#f8f3ec]"
-                      >
-                        View Details
+                  <div className="mt-6 flex flex-col gap-4 border-t border-[#EBDDD1] pt-5 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-wrap gap-3">
+                      <Link href={`/admin/reservations/${reservation.id}`}>
+                        <Button variant="outline">View Details</Button>
                       </Link>
 
-                      <Link
-                        href={`/admin/reservations/${reservation.id}/edit`}
-                        className="rounded-xl border border-[#ead8c5] px-4 py-2 text-sm font-medium text-[#2f241d] hover:bg-[#f8f3ec]"
-                      >
-                        Edit Reservation
+                      <Link href={`/admin/reservations/${reservation.id}/edit`}>
+                        <Button variant="secondary">Edit Reservation</Button>
                       </Link>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-3">
                       <select
                         value={reservation.status}
-                        onChange={(event) => {
-                          const newStatus = event.target.value;
-
-                          setReservations((prevReservations) =>
-                            prevReservations.map((item) =>
-                              item.id === reservation.id
-                                ? { ...item, status: newStatus }
-                                : item,
-                            ),
-                          );
-                        }}
-                        className="rounded-xl border border-[#ead8c5] bg-[#fffaf5] px-3 py-2 text-sm capitalize text-[#2f241d]"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="completed">Completed</option>
-                      </select>
-
-                      <button
-                        onClick={() =>
+                        onChange={(event) =>
                           updateReservationStatus(
                             reservation.id,
-                            reservation.status,
+                            event.target.value,
                           )
                         }
                         disabled={updatingId === reservation.id}
-                        className="rounded-xl bg-[#2f241d] px-4 py-2 text-sm font-medium text-white hover:bg-[#4a3a30] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-full border border-[#EBDDD1] bg-[#FFF8F1] px-5 py-3 text-sm capitalize text-[#315F5B] outline-none"
                       >
-                        {updatingId === reservation.id
-                          ? "Saving..."
-                          : "Change Status"}
-                      </button>
+                        <option value="pending">pending</option>
 
-                      {updatedId === reservation.id && (
-                        <span className="text-sm font-medium text-green-700">
-                          Updated
-                        </span>
+                        <option value="confirmed">confirmed</option>
+
+                        <option value="cancelled">cancelled</option>
+
+                        <option value="completed">completed</option>
+                      </select>
+
+                      {updatingId === reservation.id && (
+                        <StatusBadge status="Updating..." />
                       )}
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </section>
+
+        <div className="relative z-10 mt-12">
+          <Footer />
+        </div>
       </main>
     </ProtectedRoute>
   );

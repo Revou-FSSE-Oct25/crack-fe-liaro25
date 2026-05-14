@@ -1,5 +1,5 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
   "https://whiskandwonder.up.railway.app";
 
 export async function apiFetch<T>(
@@ -11,7 +11,7 @@ export async function apiFetch<T>(
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers || {}),
     },
   });
 
@@ -21,5 +21,5 @@ export async function apiFetch<T>(
     throw new Error(data?.message || "Something went wrong");
   }
 
-  return data;
+  return data as T;
 }

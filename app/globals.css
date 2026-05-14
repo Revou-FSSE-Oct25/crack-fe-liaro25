@@ -10,6 +10,8 @@
   --color-foreground: #4a3428;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-cinzel), serif;
+  --font-script: var(--font-great-vibes), cursive;
 
   --color-primary: #e8b7c8;
   --color-secondary: #c9b6e4;
@@ -30,10 +32,11 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 96px;
 }
 
 body {
-  background: var(--color-background);
+  background: var(--background);
   color: var(--color-text-primary);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -47,11 +50,15 @@ body {
 
 @layer utilities {
   .font-heading {
-    font-family: var(--font-inria), serif;
+    font-family: var(--font-cinzel), serif;
   }
 
   .font-script {
-    font-family: var(--font-script), cursive;
+    font-family: var(--font-great-vibes), cursive;
+  }
+
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
@@ -86,9 +93,4 @@ body {
     top: 0;
     width: 100%;
   }
-}
-
-html {
-  scroll-behavior: smooth;
-  scroll-padding-top: 96px;
 }
