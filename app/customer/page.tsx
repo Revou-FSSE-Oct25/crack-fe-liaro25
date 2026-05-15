@@ -171,11 +171,15 @@ export default function CustomerDashboardPage() {
 
                 <div className="mt-6 space-y-5">
                   <div>
-                    <p className="text-4xl font-semibold text-[#315F5B]">
+                    <p
+                      className={`${cinzel.className} text-4xl font-semibold text-[#315F5B]`}
+                    >
                       {loading ? "..." : profile?.name || "-"}
                     </p>
 
-                    <p className="mt-2 text-sm leading-6 text-[#7D6E66]">
+                    <p
+                      className={`${cinzel.className} mt-2 text-sm leading-6 text-[#7D6E66]`}
+                    >
                       {profile?.email || "Loading customer profile..."}
                     </p>
                   </div>
@@ -184,7 +188,7 @@ export default function CustomerDashboardPage() {
 
                   <div className="flex flex-wrap gap-2">
                     <StatusBadge status={profile?.role || "customer"} />
-                    <StatusBadge status="guest access" />
+                    <StatusBadge status="Registered user access" />
                   </div>
                 </div>
               </Card>

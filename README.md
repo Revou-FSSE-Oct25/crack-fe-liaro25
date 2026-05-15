@@ -90,6 +90,7 @@ app/
 │   ├── profile/
 │   ├── reservations/
 │   └── page.tsx
+├── forgot-password/
 ├── login/
 ├── register/
 ├── reservation/
@@ -112,12 +113,11 @@ components/
 ├── layout/
 │   ├── Navbar.tsx
 │   └── ProtectedRoute.tsx
-├── ui/
-│   ├── Button.tsx
-│   ├── Card.tsx
-│   ├── Input.tsx
-│   └── StatusBadge.tsx
-└── forms/
+└── ui/
+    ├── Button.tsx
+    ├── Card.tsx
+    ├── Input.tsx
+    └── StatusBadge.tsx
 
 hooks/
 └── useAuth.ts
@@ -128,14 +128,16 @@ lib/
 └── reservation.ts
 
 public/
-├── images/
-│   ├── logo.png
-│   ├── logo.svg
-│   └── menu/
-└── backgroundFE.png
+└── images/
+    ├── logo.png
+    ├── landingpage.webp
+    ├── admindashboard.webp
+    ├── customerdashboard.webp
+    └── guestreservation.webp
 
 types/
 └── index.ts
+
 ```
 
 ---
@@ -207,20 +209,28 @@ const response = await fetch(
 
 ## Main Pages
 
-| Page                 | Description              |
-| -------------------- | ------------------------ |
-| /                    | Landing page             |
-| /login               | User login               |
-| /register            | User registration        |
-| /reservation         | Reservation page         |
-| /reservation/success | Reservation success page |
-| /customer            | Customer dashboard       |
-| /admin               | Admin dashboard          |
-| /admin/reservations  | Reservation management   |
-| /admin/tables        | Table management         |
-| /admin/menus         | Menu management          |
-| /admin/orders        | Orders management        |
-| /admin/payments      | Payment management       |
+| Page                        | Description                   |
+| --------------------------- | ----------------------------- |
+| /                           | Landing page                  |
+| /login                      | User login                    |
+| /register                   | User registration             |
+| /reservation                | Guest reservation page        |
+| /reservation/check          | Check reservation             |
+| /reservation/success        | Reservation success page      |
+| /customer                   | Customer dashboard            |
+| /customer/reservations      | Customer reservations         |
+| /customer/reservations/new  | Create reservation with order |
+| /customer/reservations/[id] | Reservation detail            |
+| /customer/orders            | Customer orders               |
+| /customer/payments          | Customer payments             |
+| /customer/profile           | Customer profile              |
+| /admin                      | Admin dashboard               |
+| /admin/reservations         | Reservation management        |
+| /admin/reservations/[id]    | Reservation detail management |
+| /admin/tables               | Table management              |
+| /admin/menus                | Menu management               |
+| /admin/orders               | Orders management             |
+| /admin/payments             | Payment management            |
 
 ---
 
@@ -244,17 +254,20 @@ Design characteristics include:
 ✅ Reservation Flow Completed  
 ✅ Protected Dashboard Completed  
 ✅ Admin Dashboard Completed  
-✅ API Integration Completed  
+✅ Customer Dashboard Completed  
+✅ Landing Page Completed  
+✅ Gallery & About Section Completed  
 ✅ Responsive Layout Completed  
-🚧 Landing Page Enhancement In Progress  
-🚧 Gallery & About Page Enhancement In Progress  
-🚧 Final Presentation Refinement In Progress
+✅ API Integration Completed  
+✅ UI Component System Completed  
+✅ Role-Based Authorization Completed  
+🚧 Final Bug Fixing & Testing In Progress  
+🚧 Presentation & Deployment Refinement In Progress
 
 ---
 
 ## Future Improvements
 
-- Full CRUD Admin System
 - Online Payment Gateway
 - Reservation Availability Calendar
 - Email Notifications
@@ -269,15 +282,30 @@ Design characteristics include:
 
 ### Landing Page
 
-![Landing Page](public/images/landingpage.png)
+![Landing Page](public/images/landingpage.webp)
+
+### Register Page
+
+![Landing Page](public/images/registration.webp)
+
+### Login Page
+
+![Landing Page](public/images/login.webp)
 
 ### Admin Dashboard
 
-![Admin Dashboard](public/images/admindashboard.png)
+![Admin Dashboard](public/images/admindashboard.webp)
+![Admin Dashboard](public/images/admindashboard2.webp)
 
 ### Customer Dashboard
 
-## ![Customer Dashboard](public/images/customerpage.png)
+## ![Customer Dashboard](public/images/customerdashboard.webp)
+
+## ![Customer Dashboard](public/images/customerdashboard2.webp)
+
+### Guest Reservation
+
+## ![Guest Reservation](public/images/guestreservation.webp)
 
 ## Project Goal
 

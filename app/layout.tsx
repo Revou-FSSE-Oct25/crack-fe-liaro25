@@ -25,6 +25,9 @@ const greatVibes = Great_Vibes({
 export const metadata: Metadata = {
   title: "Whisk & Wonder",
   description: "Elegant Afternoon Tea Reservation System",
+  icons: {
+    icon: "images/logo.svg",
+  },
 };
 
 export default function RootLayout({

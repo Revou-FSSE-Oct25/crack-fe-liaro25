@@ -89,13 +89,18 @@ export default function Navbar() {
                       Admin Dashboard
                     </Link>
                   )}
-
                   {user.role === "CUSTOMER" && (
                     <Link
                       href="/customer"
-                      className={`${cinzel.className} text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark/75 transition hover:text-[#E8B7C8]`}
+                      className="hidden items-center gap-2 rounded-full border border-[#8FBFBE]/30 bg-[#DCEFF0]/65 px-5 py-2.5 shadow-sm backdrop-blur-md transition hover:bg-[#DCEFF0] lg:inline-flex"
                     >
-                      Customer Dashboard
+                      <span className="h-2 w-2 rounded-full bg-[#315F5B]" />
+
+                      <span
+                        className={`${cinzel.className} text-[11px] font-semibold uppercase tracking-wider text-[#315F5B]`}
+                      >
+                        Customer Dashboard
+                      </span>
                     </Link>
                   )}
 
