@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Cinzel, Great_Vibes, Inter } from "next/font/google";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import Footer from "@/components/home/Footer";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import StatusBadge from "@/components/ui/StatusBadge";
 import { getCurrentUser } from "@/lib/auth";
 
 type CustomerProfile = {
@@ -16,6 +21,59 @@ type CustomerProfile = {
   role: "CUSTOMER" | "ADMIN";
   createdAt?: string;
 };
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const dashboardCards = [
+  {
+    title: "My Reservations",
+    description:
+      "View your reservation history, check details, reschedule, or cancel your booking.",
+    href: "/customer/reservations",
+    label: "Booking History",
+    badge: "Reservation Access",
+    action: "View Reservations →",
+  },
+  {
+    title: "Make a Reservation",
+    description:
+      "Create a new reservation using your saved customer information.",
+    href: "/customer/reservations/new",
+    label: "New Booking",
+    badge: "Tea Experience",
+    action: "Book Now →",
+  },
+  {
+    title: "My Orders",
+    description:
+      "View your afternoon tea menu orders connected to your reservations.",
+    href: "/customer/orders",
+    label: "Tea Orders",
+    badge: "Menu Selection",
+    action: "View Orders →",
+  },
+  {
+    title: "Payment History",
+    description: "Check your payment records, status, and transaction history.",
+    href: "/customer/payments",
+    label: "Transactions",
+    badge: "Payment Records",
+    action: "View Payments →",
+  },
+];
 
 function formatDate(dateString?: string | null) {
   if (!dateString) return "-";
@@ -48,160 +106,212 @@ export default function CustomerDashboardPage() {
 
   return (
     <ProtectedRoute allowedRoles={["CUSTOMER"]}>
-      <main className="min-h-screen bg-[#f8f3ec] px-6 py-10">
-        <section className="mx-auto max-w-6xl">
-          <div className="mb-8">
-            <p className="text-sm font-medium uppercase tracking-[0.3em] text-[#b8895b]">
-              Whisk & Wonder
-            </p>
+      <main
+        className={`${inter.className} relative min-h-screen overflow-hidden bg-[#FFF8F1] px-6 py-10 text-[#4A3428] sm:px-10 lg:px-16`}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[url('/images/about-preview.webp')] bg-cover bg-center opacity-50"
+          aria-hidden="true"
+        />
 
-            <h1 className="mt-2 text-3xl font-bold text-[#2f241d]">
-              Customer Dashboard
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-sm text-[#6f6258]">
-              Manage your profile, reservations, orders, and payment history.
-            </p>
+        <section className="relative z-10 mx-auto max-w-7xl">
+          <div className="mb-5 flex justify-end">
+            <Link href="/">
+              <Button variant="outline">← Back to Home</Button>
+            </Link>
           </div>
 
-          <div className="mb-8 rounded-2xl border border-[#ead8c5] bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <Card className="mb-8 overflow-hidden bg-white/65 p-0">
+            <div className="grid gap-8 p-8 lg:grid-cols-[1.15fr_0.85fr] lg:p-10">
               <div>
-                <p className="text-sm font-medium uppercase tracking-[0.25em] text-[#b8895b]">
-                  Profile
+                <p
+                  className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#8FBFBE]`}
+                >
+                  Whisk & Wonder Customer
                 </p>
 
-                <h2 className="mt-2 text-2xl font-semibold text-[#2f241d]">
-                  {loading ? "Loading profile..." : profile?.name || "-"}
+                <h1
+                  className={`${cinzel.className} mt-4 text-4xl font-semibold uppercase leading-tight tracking-wider text-[#315F5B] sm:text-5xl`}
+                >
+                  Customer Dashboard
+                </h1>
+
+                <p
+                  className={`${greatVibes.className} mt-3 text-3xl text-[#E8B7C8] sm:text-4xl`}
+                >
+                  your afternoon tea journey
+                </p>
+
+                <p className="mt-5 max-w-2xl text-base leading-8 text-[#7D6E66]">
+                  Manage your profile, reservations, orders, and payment history
+                  from one elegant Whisk & Wonder customer space.
+                </p>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Link href="/customer/reservations/new">
+                    <Button variant="primary" className="px-6 py-3">
+                      Make Reservation
+                    </Button>
+                  </Link>
+
+                  <Link href="/customer/reservations">
+                    <Button variant="outline" className="px-6 py-3">
+                      My Reservations
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              <Card className="border-[#8FBFBE]/25 bg-[#DCEFF0]/70 shadow-teal-100/40">
+                <p
+                  className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#315F5B]/70`}
+                >
+                  Customer Profile
+                </p>
+
+                <div className="mt-6 space-y-5">
+                  <div>
+                    <p className="text-4xl font-semibold text-[#315F5B]">
+                      {loading ? "..." : profile?.name || "-"}
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-[#7D6E66]">
+                      {profile?.email || "Loading customer profile..."}
+                    </p>
+                  </div>
+
+                  <div className="h-px bg-white/70" />
+
+                  <div className="flex flex-wrap gap-2">
+                    <StatusBadge status={profile?.role || "customer"} />
+                    <StatusBadge status="guest access" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </Card>
+
+          <Card className="mb-8 bg-white/75">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p
+                  className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+                >
+                  Profile Details
+                </p>
+
+                <h2
+                  className={`${cinzel.className} mt-2 text-2xl font-semibold uppercase tracking-wider text-[#315F5B]`}
+                >
+                  {loading ? "Loading Profile..." : profile?.name || "-"}
                 </h2>
 
-                <p className="mt-2 text-sm text-[#6f6258]">
+                <p className="mt-2 text-sm leading-7 text-[#7D6E66]">
                   Your customer information is used to simplify future
                   reservations.
                 </p>
               </div>
 
-              <Link
-                href="/customer/profile"
-                className="rounded-xl bg-[#2f241d] px-5 py-3 text-center text-sm font-medium text-white transition hover:bg-[#4a3a30]"
-              >
-                Edit Profile
+              <Link href="/customer/profile">
+                <Button variant="secondary">Edit Profile</Button>
               </Link>
             </div>
 
             {!loading && profile && (
               <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl bg-[#f8f3ec] p-4">
-                  <p className="text-xs font-medium uppercase text-[#b8895b]">
+                <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                  <p
+                    className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                  >
                     Email
                   </p>
-                  <p className="mt-2 wrap-break-words text-sm font-medium text-[#2f241d]">
+
+                  <p className="mt-2 wrap-break-words text-sm font-semibold text-[#315F5B]">
                     {profile.email}
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-[#f8f3ec] p-4">
-                  <p className="text-xs font-medium uppercase text-[#b8895b]">
+                <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                  <p
+                    className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                  >
                     Phone
                   </p>
-                  <p className="mt-2 text-sm font-medium text-[#2f241d]">
+
+                  <p className="mt-2 text-sm font-semibold text-[#315F5B]">
                     {profile.phone || "-"}
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-[#f8f3ec] p-4">
-                  <p className="text-xs font-medium uppercase text-[#b8895b]">
+                <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                  <p
+                    className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                  >
                     Date of Birth
                   </p>
-                  <p className="mt-2 text-sm font-medium text-[#2f241d]">
+
+                  <p className="mt-2 text-sm font-semibold text-[#315F5B]">
                     {formatDate(profile.dateOfBirth)}
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-[#f8f3ec] p-4">
-                  <p className="text-xs font-medium uppercase text-[#b8895b]">
+                <div className="rounded-3xl bg-[#FFF8F1]/85 p-4">
+                  <p
+                    className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#C8A86A]`}
+                  >
                     Address
                   </p>
-                  <p className="mt-2 text-sm font-medium text-[#2f241d]">
+
+                  <p className="mt-2 text-sm font-semibold text-[#315F5B]">
                     {profile.address || "-"}
                   </p>
                 </div>
               </div>
             )}
-          </div>
+          </Card>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <Link
-              href="/customer/reservations"
-              className="rounded-2xl border border-[#ead8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            >
-              <h2 className="text-xl font-semibold text-[#2f241d]">
-                My Reservations
-              </h2>
+            {dashboardCards.map((card) => (
+              <Link key={card.title} href={card.href}>
+                <Card className="group h-full transition duration-300 hover:-translate-y-2 hover:shadow-2xl">
+                  <div className="mb-6 flex items-center justify-between gap-3">
+                    <p
+                      className={`${cinzel.className} rounded-full bg-[#DCEFF0] px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-[#315F5B]/75`}
+                    >
+                      {card.label}
+                    </p>
 
-              <p className="mt-3 text-sm leading-6 text-[#6f6258]">
-                View your reservation history, check details, reschedule, or
-                cancel your booking.
-              </p>
+                    <p className="rounded-full bg-[#F6EFE7] px-4 py-2 text-xs font-semibold text-[#7D6E66]">
+                      {card.badge}
+                    </p>
+                  </div>
 
-              <p className="mt-5 text-sm font-semibold text-[#b8895b]">
-                Open →
-              </p>
-            </Link>
+                  <h2
+                    className={`${cinzel.className} text-xl font-semibold uppercase tracking-wider text-[#315F5B]`}
+                  >
+                    {card.title}
+                  </h2>
 
-            <Link
-              href="/customer/reservations/new"
-              className="rounded-2xl border border-[#ead8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            >
-              <h2 className="text-xl font-semibold text-[#2f241d]">
-                Make a Reservation
-              </h2>
+                  <p className="mt-4 min-h-20 text-sm leading-7 text-[#7D6E66]">
+                    {card.description}
+                  </p>
 
-              <p className="mt-3 text-sm leading-6 text-[#6f6258]">
-                Create a new reservation using your saved customer information.
-              </p>
+                  <div className="mt-6 flex items-center justify-between gap-4">
+                    <Button variant="secondary" className="px-5 py-2.5">
+                      {card.action}
+                    </Button>
 
-              <p className="mt-5 text-sm font-semibold text-[#b8895b]">
-                Book Now →
-              </p>
-            </Link>
-
-            <Link
-              href="/customer/orders"
-              className="rounded-2xl border border-[#ead8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            >
-              <h2 className="text-xl font-semibold text-[#2f241d]">
-                My Orders
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-[#6f6258]">
-                View your afternoon tea menu orders connected to your
-                reservations.
-              </p>
-
-              <p className="mt-5 text-sm font-semibold text-[#b8895b]">
-                View Orders →
-              </p>
-            </Link>
-
-            <Link
-              href="/customer/payments"
-              className="rounded-2xl border border-[#ead8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            >
-              <h2 className="text-xl font-semibold text-[#2f241d]">
-                Payment History
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-[#6f6258]">
-                Check your payment records, status, and transaction history.
-              </p>
-
-              <p className="mt-5 text-sm font-semibold text-[#b8895b]">
-                View Payments →
-              </p>
-            </Link>
+                    <span className="text-2xl text-[#C8A86A]/50">✦</span>
+                  </div>
+                </Card>
+              </Link>
+            ))}
           </div>
         </section>
+
+        <div className="relative z-10 mt-12">
+          <Footer />
+        </div>
       </main>
     </ProtectedRoute>
   );
