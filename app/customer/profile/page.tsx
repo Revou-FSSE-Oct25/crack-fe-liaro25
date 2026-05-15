@@ -1,13 +1,35 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
+import { Cinzel, Great_Vibes, Inter } from "next/font/google";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import Footer from "@/components/home/Footer";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import StatusBadge from "@/components/ui/StatusBadge";
 import { User } from "@/types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://whiskandwonder.up.railway.app";
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 type ProfileForm = {
   name: string;
@@ -29,45 +51,46 @@ export default function CustomerProfilePage() {
     address: "",
     dateOfBirth: "",
   });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
+    async function fetchProfile() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(`${API_BASE_URL}/users/profile`, {
+          credentials: "include",
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to fetch profile");
+        }
+
+        setUser(data);
+        setForm({
+          name: data.name || "",
+          phone: data.phone || "",
+          address: data.address || "",
+          dateOfBirth: formatDateForInput(data.dateOfBirth),
+        });
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Failed to load profile",
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchProfile();
   }, []);
-
-  async function fetchProfile() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        credentials: "include",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch profile");
-      }
-
-      setUser(data);
-      setForm({
-        name: data.name || "",
-        phone: data.phone || "",
-        address: data.address || "",
-        dateOfBirth: formatDateForInput(data.dateOfBirth),
-      });
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to load profile",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -110,126 +133,213 @@ export default function CustomerProfilePage() {
 
   return (
     <ProtectedRoute allowedRoles={["CUSTOMER"]}>
-      <main className="min-h-screen bg-[#f8f3ec] px-4 py-8 md:px-6 md:py-10">
-        <section className="mx-auto max-w-3xl">
-          <div className="rounded-3xl bg-white p-6 shadow-sm md:p-8">
-            <p className="text-sm font-medium uppercase tracking-[0.3em] text-[#b8895b]">
+      <main
+        className={`${inter.className} relative min-h-screen overflow-hidden bg-[#FFF8F1] px-6 py-10 text-[#4A3428] sm:px-10 lg:px-16`}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[url('/images/about-preview.webp')] bg-cover bg-center opacity-50"
+          aria-hidden="true"
+        />
+
+        <section className="relative z-10 mx-auto max-w-7xl">
+          <div className="mb-5 flex justify-end">
+            <Link href="/customer">
+              <Button variant="outline">← Back to Dashboard</Button>
+            </Link>
+          </div>
+
+          <Card className="mb-8 bg-white/65">
+            <p
+              className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#8FBFBE]`}
+            >
               Customer Profile
             </p>
 
-            <h1 className="mt-3 text-4xl font-bold text-[#2f241d]">
+            <h1
+              className={`${cinzel.className} mt-4 text-4xl font-semibold uppercase leading-tight tracking-wider text-[#315F5B] sm:text-5xl`}
+            >
               My Profile
             </h1>
 
-            <p className="mt-3 text-sm leading-6 text-[#6f6258]">
-              View and update your personal account information used for
-              reservations.
+            <p
+              className={`${greatVibes.className} mt-3 text-3xl text-[#E8B7C8] sm:text-4xl`}
+            >
+              your personal reservation details
             </p>
 
-            {loading && (
-              <div className="mt-8 rounded-2xl bg-[#f8f3ec] p-5 text-sm text-[#6f6258]">
-                Loading profile...
-              </div>
-            )}
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[#7D6E66]">
+              View and update your customer account information used for future
+              reservations and afternoon tea bookings.
+            </p>
 
-            {!loading && error && (
-              <div className="mt-8 rounded-2xl bg-red-50 p-5 text-sm font-medium text-red-700">
-                {error}
-              </div>
-            )}
+            <div className="mt-7 flex flex-wrap gap-3">
+              <StatusBadge status="customer profile" />
+              <StatusBadge status="editable details" />
+            </div>
+          </Card>
 
-            {!loading && user && (
-              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#2f241d]">
-                    Full Name
-                  </label>
-                  <input
-                    value={form.name}
-                    onChange={(event) =>
-                      setForm({ ...form, name: event.target.value })
-                    }
-                    className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
-                  />
+          {loading && (
+            <Card className="bg-white/75">
+              <p className="text-sm text-[#7D6E66]">Loading profile...</p>
+            </Card>
+          )}
+
+          {!loading && error && !user && (
+            <Card className="bg-[#F8D7DA]/90 text-sm font-semibold text-[#9B2C2C]">
+              {error}
+            </Card>
+          )}
+
+          {!loading && user && (
+            <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+              <Card className="h-fit border-[#8FBFBE]/25 bg-[#DCEFF0]/70 shadow-teal-100/40">
+                <p
+                  className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#315F5B]/70`}
+                >
+                  Account Overview
+                </p>
+
+                <h2 className="mt-5 text-3xl font-semibold text-[#315F5B]">
+                  {user.name}
+                </h2>
+
+                <p className="mt-2 text-sm leading-7 text-[#7D6E66]">
+                  {user.email}
+                </p>
+
+                <div className="mt-6 h-px bg-white/70" />
+
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <p
+                      className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#315F5B]/70`}
+                    >
+                      Phone
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-[#315F5B]">
+                      {user.phone || "-"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p
+                      className={`${cinzel.className} text-[10px] uppercase tracking-wider text-[#315F5B]/70`}
+                    >
+                      Address
+                    </p>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-[#315F5B]">
+                      {user.address || "-"}
+                    </p>
+                  </div>
                 </div>
+              </Card>
 
+              <Card className="bg-white/75">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#2f241d]">
-                    Email Address
-                  </label>
-                  <input
-                    value={user.email}
-                    readOnly
-                    className="w-full rounded-xl border border-[#ead8c5] bg-[#f8f3ec] px-4 py-3 text-[#6f6258] outline-none"
-                  />
-                  <p className="mt-2 text-xs text-[#6f6258]">
-                    Email cannot be changed from this page.
+                  <p
+                    className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+                  >
+                    Edit Profile
+                  </p>
+
+                  <h2
+                    className={`${cinzel.className} mt-2 text-2xl font-semibold uppercase tracking-wider text-[#315F5B]`}
+                  >
+                    Customer Information
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-7 text-[#7D6E66]">
+                    Keep your contact details updated for smoother reservation
+                    handling.
                   </p>
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#2f241d]">
-                    Phone Number
-                  </label>
-                  <input
-                    value={form.phone}
-                    onChange={(event) =>
-                      setForm({ ...form, phone: event.target.value })
-                    }
-                    className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
-                  />
-                </div>
+                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Input
+                      label="Full Name"
+                      value={form.name}
+                      onChange={(event) =>
+                        setForm({ ...form, name: event.target.value })
+                      }
+                    />
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#2f241d]">
-                    Address
-                  </label>
-                  <textarea
-                    value={form.address}
-                    onChange={(event) =>
-                      setForm({ ...form, address: event.target.value })
-                    }
-                    className="h-28 w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
-                  />
-                </div>
+                    <Input
+                      label="Email Address"
+                      value={user.email}
+                      readOnly
+                      className="cursor-not-allowed opacity-70"
+                    />
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#2f241d]">
-                    Date of Birth
-                  </label>
-                  <input
-                    type="date"
-                    value={form.dateOfBirth}
-                    onChange={(event) =>
-                      setForm({ ...form, dateOfBirth: event.target.value })
-                    }
-                    className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
-                  />
-                </div>
+                    <Input
+                      label="Phone Number"
+                      value={form.phone}
+                      onChange={(event) =>
+                        setForm({ ...form, phone: event.target.value })
+                      }
+                    />
 
-                {message && (
-                  <div className="rounded-xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-                    {message}
+                    <Input
+                      label="Date of Birth"
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          dateOfBirth: event.target.value,
+                        })
+                      }
+                    />
                   </div>
-                )}
 
-                {error && (
-                  <div className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                    {error}
+                  <div>
+                    <label
+                      className={`${cinzel.className} mb-2 block text-xs font-semibold uppercase tracking-wider text-[#C8A86A]`}
+                    >
+                      Address
+                    </label>
+
+                    <textarea
+                      value={form.address}
+                      onChange={(event) =>
+                        setForm({ ...form, address: event.target.value })
+                      }
+                      className="h-28 w-full rounded-3xl border border-[#EBDDD1] bg-[#FFF8F1]/80 px-5 py-4 text-sm text-[#315F5B] outline-none transition focus:border-[#8FBFBE]"
+                    />
                   </div>
-                )}
 
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full rounded-xl bg-[#2f241d] px-5 py-4 text-sm font-medium text-white transition hover:bg-[#4a3a30] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {saving ? "Saving profile..." : "Save Profile"}
-                </button>
-              </form>
-            )}
-          </div>
+                  <p className="text-xs leading-6 text-[#7D6E66]">
+                    Email cannot be changed from this page.
+                  </p>
+
+                  {message && (
+                    <Card className="bg-[#DDF2E3]/90 p-4 text-sm font-semibold text-[#2F6B45]">
+                      {message}
+                    </Card>
+                  )}
+
+                  {error && (
+                    <Card className="bg-[#F8D7DA]/90 p-4 text-sm font-semibold text-[#9B2C2C]">
+                      {error}
+                    </Card>
+                  )}
+
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full py-3"
+                  >
+                    {saving ? "Saving profile..." : "Save Profile"}
+                  </Button>
+                </form>
+              </Card>
+            </div>
+          )}
         </section>
+
+        <div className="relative z-10 mt-12">
+          <Footer />
+        </div>
       </main>
     </ProtectedRoute>
   );
