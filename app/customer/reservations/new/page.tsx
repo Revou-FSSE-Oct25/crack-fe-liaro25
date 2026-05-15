@@ -246,32 +246,28 @@ export default function CustomerNewReservationPage() {
   async function createOrder(reservationId: string) {
     if (orderLines.length === 0) return;
 
-    async function createOrder(reservationId: string) {
-      if (orderLines.length === 0) return;
+    const response = await fetch(`${API_BASE_URL}/orders/my`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reservationId,
+        items: orderLines.map((line) => ({
+          menuItemId: line.menuItemId,
+          menuPackageId: line.menuPackageId,
+          quantity: line.quantity,
+        })),
+      }),
+    });
 
-      const response = await fetch(`${API_BASE_URL}/orders/my`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reservationId,
-          items: orderLines.map((line) => ({
-            menuItemId: line.menuItemId,
-            menuPackageId: line.menuPackageId,
-            quantity: line.quantity,
-          })),
-        }),
-      });
+    const data = await response.json().catch(() => null);
 
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(data?.message || "Failed to create order.");
-      }
-
-      return data;
+    if (!response.ok) {
+      throw new Error(
+        data?.message || "Reservation created, but order failed.",
+      );
     }
   }
 
@@ -290,8 +286,13 @@ export default function CustomerNewReservationPage() {
 
       const response = await createReservation(payload);
 
-      if (orderLines.length > 0) {
+      try {
         await createOrder(response.id);
+      } catch (orderError) {
+        console.error(
+          "Reservation created, but order creation failed:",
+          orderError,
+        );
       }
 
       router.push(
