@@ -292,13 +292,7 @@ export default function MyReservationsPage() {
 
                     <div className="flex flex-col gap-3 lg:w-55">
                       <Link href={`/customer/reservations/${reservation.id}`}>
-                        <Button className="w-full">View Reservation</Button>
-                      </Link>
-
-                      <Link href={`/customer/reservations/${reservation.id}`}>
-                        <Button variant="outline" className="w-full">
-                          Manage Booking
-                        </Button>
+                        <Button className="w-full">Manage Reservation</Button>
                       </Link>
                     </div>
                   </div>

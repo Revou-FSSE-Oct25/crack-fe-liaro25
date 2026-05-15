@@ -338,7 +338,9 @@ export default function CustomerOrdersPage() {
                           >
                             <div>
                               <h4 className="text-lg font-semibold text-[#315F5B]">
-                                {item.menuItem?.name || "Menu Item"}
+                                {item.menuItem?.name ||
+                                  item.menuPackage?.name ||
+                                  "Menu Item"}
                               </h4>
 
                               <p className="mt-2 text-sm text-[#7D6E66]">
