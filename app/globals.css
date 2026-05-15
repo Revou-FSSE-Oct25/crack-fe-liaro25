@@ -1,63 +1,96 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFF8F1;
-  --foreground: #4A3428;
+  --background: #fff8f1;
+  --foreground: #4a3428;
 }
 
 @theme inline {
-  /* Macaron Palette */
-  --color-primary: #F4A7B9;
-  --color-secondary: #C9B6E4;
-  --color-accent: #BFE3C0;
-  --color-accent2: #F7E58D;
+  --color-background: #fff8f1;
+  --color-foreground: #4a3428;
 
-  /* Neutral */
-  --color-background: #FFF8F1;
-  --color-surface: #FFFFFF;
-  --color-border-soft: #EBDDD1;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-cinzel), serif;
+  --font-script: var(--font-great-vibes), cursive;
 
-  /* Text */
-  --color-text-primary: #4A3428;
-  --color-text-secondary: #6B7280;
+  --color-primary: #e8b7c8;
+  --color-secondary: #c9b6e4;
+  --color-accent: #8fbfbe;
+  --color-accent2: #c8a86a;
+
+  --color-surface: #ffffff;
+  --color-ivory: #faf6f0;
+  --color-border-soft: #ebddd1;
+
+  --color-text-primary: #4a3428;
+  --color-text-secondary: #6b7280;
+
+  --color-teal-dark: #315f5b;
+  --color-blush: #e8b7c8;
+  --color-gold: #c8a86a;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
 }
 
 body {
-  background: var(--color-background);
+  background: var(--background);
   color: var(--color-text-primary);
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-quicksand), sans-serif;
+::selection {
+  background: #e8b7c8;
+  color: white;
 }
 
-@keyframes wiggle {
-  0%,
-  100% {
-    transform: rotate(0deg);
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-cinzel), serif;
   }
-  25% {
-    transform: rotate(-2deg);
+
+  .font-script {
+    font-family: var(--font-great-vibes), cursive;
   }
-  75% {
-    transform: rotate(2deg);
+
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
 @keyframes float {
   0%,
   100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translateY(0px);
   }
+
   50% {
-    transform: translateY(-12px) rotate(2deg);
+    transform: translateY(-10px);
   }
 }
 
 .animate-float {
-  animation: float 5s ease-in-out infinite;
+  animation: float 6s ease-in-out infinite;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
 }

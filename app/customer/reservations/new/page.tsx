@@ -1,52 +1,79 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { Cinzel, Great_Vibes, Inter } from "next/font/google";
 
+import Footer from "@/components/home/Footer";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { getCurrentUser } from "@/lib/auth";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import StatusBadge from "@/components/ui/StatusBadge";
+
 import { createReservation } from "@/lib/reservation";
 import { CreateReservationRequest, Menu, MenuPackage } from "@/types";
+import { getCurrentUser } from "@/lib/auth";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://whiskandwonder.up.railway.app";
 
-const categoryOrder = [
-  "Western Savory",
-  "Western Sweet",
-  "Western Beverage",
-  "Traditional Savory",
-  "Traditional Sweet",
-  "Traditional Beverage",
-];
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
-type CustomerProfile = {
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+type OrderLine = {
+  id: string;
+  type: "item" | "package";
   name: string;
-  email: string;
-  phone?: string | null;
-};
-
-type SelectedOrderItem = {
+  category?: string;
   menuItemId?: string;
   menuPackageId?: string;
+  price: number;
   quantity: number;
 };
 
-function formatPrice(price: string | number) {
-  return `Rp ${Number(price).toLocaleString("id-ID")}`;
+const timeOptions = [
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+];
+
+function formatCurrency(value: string | number) {
+  return `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
 }
 
 export default function CustomerNewReservationPage() {
   const router = useRouter();
 
+  const [error, setError] = useState("");
   const [menus, setMenus] = useState<Menu[]>([]);
   const [packages, setPackages] = useState<MenuPackage[]>([]);
-  const [selectedItems, setSelectedItems] = useState<SelectedOrderItem[]>([]);
-  const [menuLoading, setMenuLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loadingMenus, setLoadingMenus] = useState(true);
+
+  const [menuSearch, setMenuSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [quantity, setQuantity] = useState("1");
+  const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
 
   const {
     register,
@@ -56,22 +83,25 @@ export default function CustomerNewReservationPage() {
   } = useForm<CreateReservationRequest>();
 
   useEffect(() => {
-    async function fillCustomerProfile() {
-      const user = (await getCurrentUser()) as CustomerProfile | null;
+    async function autofillCustomerProfile() {
+      try {
+        const user = await getCurrentUser();
 
-      if (!user) return;
-
-      setValue("guestName", user.name);
-      setValue("guestEmail", user.email);
-
-      if (user.phone) {
-        setValue("guestPhone", user.phone);
+        setValue("guestName", user.name || "");
+        setValue("guestEmail", user.email || "");
+        setValue("guestPhone", user.phone || "");
+      } catch (error) {
+        console.error("Failed to autofill customer profile:", error);
       }
     }
 
-    async function fetchMenusAndPackages() {
+    autofillCustomerProfile();
+  }, [setValue]);
+
+  useEffect(() => {
+    async function fetchMenus() {
       try {
-        setMenuLoading(true);
+        setLoadingMenus(true);
 
         const [itemsResponse, packagesResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/menus/items`, {
@@ -85,144 +115,138 @@ export default function CustomerNewReservationPage() {
         const itemsData = await itemsResponse.json();
         const packagesData = await packagesResponse.json();
 
-        if (!itemsResponse.ok) {
-          throw new Error(itemsData.message || "Failed to fetch menu items");
-        }
-
-        if (!packagesResponse.ok) {
-          throw new Error(
-            packagesData.message || "Failed to fetch menu packages",
-          );
-        }
-
-        setMenus(
-          Array.isArray(itemsData)
-            ? itemsData.filter((menu: Menu) => menu.status === "available")
-            : [],
-        );
-
-        setPackages(
-          Array.isArray(packagesData)
-            ? packagesData.filter(
-                (menuPackage: MenuPackage) =>
-                  menuPackage.status === "available",
-              )
-            : [],
-        );
+        setMenus(Array.isArray(itemsData) ? itemsData : []);
+        setPackages(Array.isArray(packagesData) ? packagesData : []);
       } catch (error) {
         console.error("Failed to fetch menus:", error);
-        setError("Failed to load menu data. Please refresh the page.");
       } finally {
-        setMenuLoading(false);
+        setLoadingMenus(false);
       }
     }
 
-    fillCustomerProfile();
-    fetchMenusAndPackages();
-  }, [setValue]);
+    fetchMenus();
+  }, []);
 
-  function getSelectedQuantity(id: string, type: "item" | "package") {
-    const selectedItem = selectedItems.find((item) =>
-      type === "item" ? item.menuItemId === id : item.menuPackageId === id,
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(
+      new Set(
+        menus
+          .map((menu) => menu.category)
+          .filter((category): category is string => Boolean(category)),
+      ),
     );
 
-    return selectedItem?.quantity || 0;
-  }
+    return ["all", ...uniqueCategories];
+  }, [menus]);
 
-  function updateQuantity(
-    id: string,
-    type: "item" | "package",
-    quantity: number,
-  ) {
-    setSelectedItems((prevItems) => {
-      const filteredItems = prevItems.filter((item) =>
-        type === "item" ? item.menuItemId !== id : item.menuPackageId !== id,
-      );
+  const filteredMenus = useMemo(() => {
+    const keyword = menuSearch.toLowerCase();
 
-      if (quantity <= 0) {
-        return filteredItems;
+    return menus.filter((menu) => {
+      const matchesSearch =
+        !keyword ||
+        menu.name.toLowerCase().includes(keyword) ||
+        menu.category?.toLowerCase().includes(keyword);
+
+      const matchesCategory =
+        categoryFilter === "all" || menu.category === categoryFilter;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [menus, menuSearch, categoryFilter]);
+
+  const filteredPackages = useMemo(() => {
+    const keyword = menuSearch.toLowerCase();
+
+    return packages.filter((menuPackage) =>
+      menuPackage.name.toLowerCase().includes(keyword),
+    );
+  }, [packages, menuSearch]);
+
+  const orderTotal = useMemo(() => {
+    return orderLines.reduce(
+      (total, line) => total + line.price * line.quantity,
+      0,
+    );
+  }, [orderLines]);
+
+  function addMenuItem(menu: Menu) {
+    const addedQuantity = Number(quantity || 1);
+
+    setOrderLines((prev) => {
+      const existingLine = prev.find((line) => line.menuItemId === menu.id);
+
+      if (existingLine) {
+        return prev.map((line) =>
+          line.menuItemId === menu.id
+            ? {
+                ...line,
+                quantity: line.quantity + addedQuantity,
+              }
+            : line,
+        );
       }
 
       return [
-        ...filteredItems,
-        type === "item"
-          ? { menuItemId: id, quantity }
-          : { menuPackageId: id, quantity },
+        ...prev,
+        {
+          id: `item-${menu.id}-${Date.now()}`,
+          type: "item",
+          menuItemId: menu.id,
+          name: menu.name,
+          category: menu.category,
+          price: Number(menu.price || 0),
+          quantity: addedQuantity,
+        },
       ];
     });
+
+    setQuantity("1");
   }
 
-  const groupedMenus = useMemo(() => {
-    return categoryOrder
-      .map((category) => ({
-        category,
-        items: menus.filter((menu) => menu.category === category),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [menus]);
+  function addPackage(menuPackage: MenuPackage) {
+    const addedQuantity = Number(quantity || 1);
 
-  const selectedOrderDetails = useMemo(() => {
-    return selectedItems
-      .map((selectedItem) => {
-        if (selectedItem.menuItemId) {
-          const menu = menus.find(
-            (item) => item.id === selectedItem.menuItemId,
-          );
+    setOrderLines((prev) => {
+      const existingLine = prev.find(
+        (line) => line.menuPackageId === menuPackage.id,
+      );
 
-          if (!menu) return null;
+      if (existingLine) {
+        return prev.map((line) =>
+          line.menuPackageId === menuPackage.id
+            ? {
+                ...line,
+                quantity: line.quantity + addedQuantity,
+              }
+            : line,
+        );
+      }
 
-          return {
-            id: menu.id,
-            name: menu.name,
-            type: "Menu Item",
-            price: Number(menu.price),
-            quantity: selectedItem.quantity,
-            subtotal: Number(menu.price) * selectedItem.quantity,
-          };
-        }
+      return [
+        ...prev,
+        {
+          id: `package-${menuPackage.id}-${Date.now()}`,
+          type: "package",
+          menuPackageId: menuPackage.id,
+          name: menuPackage.name,
+          price: Number(menuPackage.price || 0),
+          quantity: addedQuantity,
+        },
+      ];
+    });
 
-        if (selectedItem.menuPackageId) {
-          const menuPackage = packages.find(
-            (item) => item.id === selectedItem.menuPackageId,
-          );
+    setQuantity("1");
+  }
 
-          if (!menuPackage) return null;
-
-          return {
-            id: menuPackage.id,
-            name: menuPackage.name,
-            type: "Package",
-            price: Number(menuPackage.price),
-            quantity: selectedItem.quantity,
-            subtotal: Number(menuPackage.price) * selectedItem.quantity,
-          };
-        }
-
-        return null;
-      })
-      .filter(Boolean) as {
-      id: string;
-      name: string;
-      type: string;
-      price: number;
-      quantity: number;
-      subtotal: number;
-    }[];
-  }, [menus, packages, selectedItems]);
-
-  const estimatedTotal = useMemo(() => {
-    return selectedOrderDetails.reduce(
-      (total, item) => total + item.subtotal,
-      0,
-    );
-  }, [selectedOrderDetails]);
+  function removeOrderLine(lineId: string) {
+    setOrderLines((prev) => prev.filter((line) => line.id !== lineId));
+  }
 
   async function createOrder(reservationId: string) {
-    if (selectedItems.length === 0) {
-      return;
-    }
+    if (orderLines.length === 0) return;
 
-    const response = await fetch(`${API_BASE_URL}/orders/my`, {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -230,17 +254,21 @@ export default function CustomerNewReservationPage() {
       },
       body: JSON.stringify({
         reservationId,
-        items: selectedItems,
+        items: orderLines.map((line) => ({
+          menuItemId: line.menuItemId,
+          menuPackageId: line.menuPackageId,
+          quantity: line.quantity,
+        })),
       }),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      throw new Error(data.message || "Failed to create order");
+      throw new Error(
+        data?.message || "Reservation created, but order failed.",
+      );
     }
-
-    return data;
   }
 
   async function onSubmit(data: CreateReservationRequest) {
@@ -256,369 +284,388 @@ export default function CustomerNewReservationPage() {
         guestCount: Number(data.guestCount),
       };
 
-      const reservation = await createReservation(payload);
+      const response = await createReservation(payload);
 
-      if (selectedItems.length > 0) {
-        await createOrder(reservation.id);
-        router.push("/customer/orders");
-        return;
+      try {
+        await createOrder(response.id);
+      } catch (orderError) {
+        console.error(
+          "Reservation created, but order creation failed:",
+          orderError,
+        );
       }
 
       router.push(
         `/reservation/success?code=${encodeURIComponent(
-          reservation.reservationCode,
+          response.reservationCode,
         )}`,
       );
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to create reservation or order",
+        err instanceof Error ? err.message : "Failed to create reservation",
       );
     }
   }
 
   return (
     <ProtectedRoute allowedRoles={["CUSTOMER"]}>
-      <main className="min-h-screen bg-[#f8f3ec] px-4 py-8 md:px-6 md:py-12">
-        <section className="mx-auto max-w-7xl">
-          <div className="mb-8 rounded-3xl bg-white p-6 shadow-sm md:p-8">
-            <p className="text-sm font-medium uppercase tracking-[0.3em] text-[#b8895b]">
-              Customer Reservation
-            </p>
+      <main
+        className={`${inter.className} relative min-h-screen overflow-hidden bg-[#FFF8F1] text-[#4A3428]`}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[url('/images/about-preview.webp')] bg-cover bg-center opacity-50"
+          aria-hidden="true"
+        />
 
-            <h1 className="mt-3 text-4xl font-bold text-[#2f241d]">
-              Create Reservation
-            </h1>
+        <section className="relative z-10 px-6 py-10 sm:px-10 lg:px-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-5 flex justify-end">
+              <Link href="/customer">
+                <Button variant="outline">← Back to Dashboard</Button>
+              </Link>
+            </div>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6f6258]">
-              Choose your reservation details and add your preferred afternoon
-              tea package or individual menu items.
-            </p>
-          </div>
+            <Card className="mb-8 bg-white/65">
+              <p
+                className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#8FBFBE]`}
+              >
+                Whisk & Wonder Customer
+              </p>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="grid gap-6 lg:grid-cols-[1fr_380px]"
-          >
-            <div className="space-y-6">
-              <section className="rounded-3xl bg-white p-6 shadow-sm md:p-8">
-                <h2 className="text-2xl font-bold text-[#2f241d]">
-                  Reservation Details
-                </h2>
+              <h1
+                className={`${cinzel.className} mt-4 text-4xl font-semibold uppercase leading-tight tracking-wider text-[#315F5B] sm:text-5xl`}
+              >
+                Create Reservation
+              </h1>
 
-                <div className="mt-6 grid gap-5 md:grid-cols-2">
-                  <input
-                    {...register("guestName", { required: true })}
-                    className="w-full rounded-xl border border-[#ead8c5] bg-[#f8f3ec] px-4 py-3 text-[#2f241d] outline-none"
-                    readOnly
-                  />
+              <p
+                className={`${greatVibes.className} mt-3 text-3xl text-[#E8B7C8] sm:text-4xl`}
+              >
+                reserve your elegant tea experience
+              </p>
 
-                  <input
-                    type="email"
-                    {...register("guestEmail", { required: true })}
-                    className="w-full rounded-xl border border-[#ead8c5] bg-[#f8f3ec] px-4 py-3 text-[#2f241d] outline-none"
-                    readOnly
-                  />
+              <p className="mt-5 max-w-2xl text-base leading-8 text-[#7D6E66]">
+                Fill in your reservation details, choose your preferred time,
+                and add menu selections for your afternoon tea experience.
+              </p>
 
-                  <input
-                    placeholder="Phone"
-                    {...register("guestPhone", { required: true })}
-                    className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
-                  />
+              <div className="mt-7 flex flex-wrap gap-3">
+                <StatusBadge status="reservation booking" />
+                <StatusBadge status="menu selection" />
+                <StatusBadge status="customer access" />
+              </div>
+            </Card>
 
-                  <input
-                    type="date"
-                    {...register("reservationDate", { required: true })}
-                    className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
-                  />
-
-                  <select
-                    {...register("startTime", { required: true })}
-                    className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
+            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+              <Card className="bg-white/75">
+                <div className="text-center">
+                  <p
+                    className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#8FBFBE]`}
                   >
-                    <option value="">Select time</option>
-                    <option value="11:00">11:00</option>
-                    <option value="12:00">12:00</option>
-                    <option value="13:00">13:00</option>
-                    <option value="14:00">14:00</option>
-                    <option value="15:00">15:00</option>
-                    <option value="16:00">16:00</option>
-                    <option value="17:00">17:00</option>
-                    <option value="18:00">18:00</option>
-                  </select>
+                    Reservation Form
+                  </p>
 
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Number of Guests"
-                    {...register("guestCount", { required: true })}
-                    className="w-full rounded-xl border border-[#ead8c5] bg-white px-4 py-3 text-[#2f241d] outline-none focus:border-[#b8895b]"
-                  />
+                  <h2
+                    className={`${cinzel.className} mt-3 text-3xl font-semibold uppercase tracking-wider text-[#315F5B]`}
+                  >
+                    Book Your Table
+                  </h2>
+
+                  <p
+                    className={`${greatVibes.className} mt-2 text-3xl text-[#E8B7C8]`}
+                  >
+                    warmth and wonder await
+                  </p>
+
+                  <p className="mt-3 text-sm leading-7 text-[#7D6E66]">
+                    All reservation fields are required.
+                  </p>
                 </div>
-              </section>
 
-              <section className="rounded-3xl bg-white p-6 shadow-sm md:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#b8895b]">
-                  Recommended Sets
-                </p>
+                <form
+                  onSubmit={handleSubmit(onSubmit)}
+                  className="mt-8 space-y-5"
+                >
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Input
+                      label="Guest Name"
+                      readOnly
+                      {...register("guestName")}
+                      className="cursor-not-allowed opacity-70"
+                    />
 
-                <h2 className="mt-2 text-2xl font-bold text-[#2f241d]">
-                  Afternoon Tea Packages
-                </h2>
+                    <Input
+                      label="Email Address"
+                      readOnly
+                      {...register("guestEmail")}
+                      className="cursor-not-allowed opacity-70"
+                    />
 
-                {menuLoading && (
-                  <div className="mt-6 rounded-2xl bg-[#f8f3ec] p-5 text-sm text-[#6f6258]">
-                    Loading menus...
+                    <Input
+                      label="Phone Number"
+                      readOnly
+                      {...register("guestPhone")}
+                      className="cursor-not-allowed opacity-70"
+                    />
+
+                    <Input
+                      label="Number of Guests"
+                      type="number"
+                      min="1"
+                      placeholder="2"
+                      {...register("guestCount", { required: true })}
+                    />
+
+                    <Input
+                      label="Reservation Date"
+                      type="date"
+                      {...register("reservationDate", { required: true })}
+                    />
+
+                    <div>
+                      <label
+                        className={`${cinzel.className} mb-2 block text-xs font-semibold uppercase tracking-wider text-[#C8A86A]`}
+                      >
+                        Start Time
+                      </label>
+
+                      <select
+                        {...register("startTime", { required: true })}
+                        className="w-full rounded-full border border-[#EBDDD1] bg-[#FFF8F1]/80 px-5 py-3 text-sm text-[#315F5B] outline-none transition focus:border-[#8FBFBE]"
+                      >
+                        <option value="">Select time</option>
+                        {timeOptions.map((time) => (
+                          <option key={time} value={time}>
+                            {time}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                )}
 
-                {!menuLoading && packages.length > 0 && (
-                  <div className="mt-6 grid gap-5 md:grid-cols-2">
-                    {packages.map((menuPackage) => {
-                      const quantity = getSelectedQuantity(
-                        menuPackage.id,
-                        "package",
-                      );
+                  {error && (
+                    <Card className="border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-600">
+                      {error}
+                    </Card>
+                  )}
 
-                      return (
-                        <div
-                          key={menuPackage.id}
-                          className="overflow-hidden rounded-3xl border border-[#ead8c5] bg-[#fffaf5]"
-                        >
-                          <div className="relative h-52 w-full bg-[#efe3d3]">
-                            {menuPackage.imageUrl && (
-                              <Image
-                                src={menuPackage.imageUrl}
-                                alt={menuPackage.name}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                                className="object-cover"
-                              />
-                            )}
-                          </div>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3"
+                  >
+                    {isSubmitting
+                      ? "Creating Reservation..."
+                      : orderLines.length > 0
+                        ? "Create Reservation With Order"
+                        : "Create Reservation"}
+                  </Button>
+                </form>
+              </Card>
 
-                          <div className="p-5">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b8895b]">
-                              Package
-                            </p>
+              <div className="space-y-6">
+                <Card className="bg-white/75">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p
+                        className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+                      >
+                        Menu Selection
+                      </p>
 
-                            <h3 className="mt-2 text-xl font-bold text-[#2f241d]">
-                              {menuPackage.name}
-                            </h3>
+                      <h2
+                        className={`${cinzel.className} mt-2 text-2xl font-semibold uppercase tracking-wider text-[#315F5B]`}
+                      >
+                        Choose Your Afternoon Tea
+                      </h2>
 
-                            {menuPackage.description && (
-                              <p className="mt-2 text-sm leading-6 text-[#6f6258]">
-                                {menuPackage.description}
-                              </p>
-                            )}
+                      <p className="mt-2 text-sm leading-7 text-[#7D6E66]">
+                        Search and filter menu items by category, then add them
+                        to your reservation.
+                      </p>
+                    </div>
 
-                            <div className="mt-5 flex items-center justify-between">
-                              <p className="text-xl font-bold text-[#b8895b]">
-                                {formatPrice(menuPackage.price)}
-                              </p>
-
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateQuantity(
-                                      menuPackage.id,
-                                      "package",
-                                      quantity - 1,
-                                    )
-                                  }
-                                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ead8c5] bg-white text-lg font-bold text-[#2f241d]"
-                                >
-                                  -
-                                </button>
-
-                                <span className="w-7 text-center text-sm font-bold text-[#2f241d]">
-                                  {quantity}
-                                </span>
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateQuantity(
-                                      menuPackage.id,
-                                      "package",
-                                      quantity + 1,
-                                    )
-                                  }
-                                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2f241d] text-lg font-bold text-white"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    <StatusBadge status={`${orderLines.length} selected`} />
                   </div>
-                )}
-              </section>
 
-              <section className="rounded-3xl bg-white p-6 shadow-sm md:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#b8895b]">
-                  À La Carte
-                </p>
+                  <div className="mt-6 grid gap-4 md:grid-cols-[1fr_220px_110px]">
+                    <Input
+                      placeholder="Search menu..."
+                      value={menuSearch}
+                      onChange={(event) => setMenuSearch(event.target.value)}
+                    />
 
-                <h2 className="mt-2 text-2xl font-bold text-[#2f241d]">
-                  Individual Menu Items
-                </h2>
+                    <select
+                      value={categoryFilter}
+                      onChange={(event) =>
+                        setCategoryFilter(event.target.value)
+                      }
+                      className="w-full rounded-full border border-[#EBDDD1] bg-[#FFF8F1] px-5 py-3 text-sm capitalize text-[#315F5B] outline-none transition focus:border-[#8FBFBE]"
+                    >
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category === "all" ? "All Categories" : category}
+                        </option>
+                      ))}
+                    </select>
 
-                {!menuLoading && groupedMenus.length > 0 && (
-                  <div className="mt-8 space-y-10">
-                    {groupedMenus.map((group) => (
-                      <div key={group.category}>
-                        <div className="mb-4 flex items-end justify-between">
-                          <h3 className="text-xl font-bold text-[#2f241d]">
-                            {group.category}
-                          </h3>
-                          <p className="text-sm text-[#6f6258]">
-                            {group.items.length} items
+                    <Input
+                      type="number"
+                      min="1"
+                      value={quantity}
+                      onChange={(event) => setQuantity(event.target.value)}
+                      placeholder="Qty"
+                    />
+                  </div>
+                </Card>
+
+                <Card className="bg-white/75">
+                  <p
+                    className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+                  >
+                    Menu Items
+                  </p>
+
+                  {loadingMenus && (
+                    <p className="mt-4 text-sm text-[#7D6E66]">
+                      Loading menus...
+                    </p>
+                  )}
+
+                  {!loadingMenus && filteredMenus.length === 0 && (
+                    <p className="mt-4 text-sm text-[#7D6E66]">
+                      No menu items found.
+                    </p>
+                  )}
+
+                  <div className="mt-4 max-h-105 space-y-3 overflow-y-auto pr-1">
+                    {filteredMenus.map((menu) => (
+                      <div
+                        key={menu.id}
+                        className="flex flex-col gap-3 rounded-3xl border border-[#EBDDD1] bg-[#FFF8F1]/85 p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <p className="font-semibold text-[#315F5B]">
+                            {menu.name}
+                          </p>
+
+                          <p className="mt-1 text-sm text-[#7D6E66]">
+                            {menu.category || "Uncategorized"} ·{" "}
+                            {formatCurrency(menu.price)}
                           </p>
                         </div>
 
-                        <div className="grid gap-5 md:grid-cols-2">
-                          {group.items.map((menu) => {
-                            const quantity = getSelectedQuantity(
-                              menu.id,
-                              "item",
-                            );
-
-                            return (
-                              <div
-                                key={menu.id}
-                                className="overflow-hidden rounded-3xl border border-[#ead8c5] bg-[#fffaf5]"
-                              >
-                                <div className="relative h-44 w-full bg-[#efe3d3]">
-                                  {menu.imageUrl && (
-                                    <Image
-                                      src={menu.imageUrl}
-                                      alt={menu.name}
-                                      fill
-                                      sizes="(max-width: 768px) 100vw, 50vw"
-                                      className="object-cover"
-                                    />
-                                  )}
-                                </div>
-
-                                <div className="p-5">
-                                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b8895b]">
-                                    {menu.category}
-                                  </p>
-
-                                  <h4 className="mt-2 text-lg font-bold text-[#2f241d]">
-                                    {menu.name}
-                                  </h4>
-
-                                  <p className="mt-5 text-lg font-bold text-[#b8895b]">
-                                    {formatPrice(menu.price)}
-                                  </p>
-
-                                  <div className="mt-4 flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateQuantity(
-                                          menu.id,
-                                          "item",
-                                          quantity - 1,
-                                        )
-                                      }
-                                      className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ead8c5] bg-white text-lg font-bold text-[#2f241d]"
-                                    >
-                                      -
-                                    </button>
-
-                                    <span className="w-7 text-center text-sm font-bold text-[#2f241d]">
-                                      {quantity}
-                                    </span>
-
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateQuantity(
-                                          menu.id,
-                                          "item",
-                                          quantity + 1,
-                                        )
-                                      }
-                                      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2f241d] text-lg font-bold text-white"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <Button
+                          variant="secondary"
+                          onClick={() => addMenuItem(menu)}
+                        >
+                          Add
+                        </Button>
                       </div>
                     ))}
                   </div>
-                )}
-              </section>
-            </div>
+                </Card>
 
-            <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm lg:sticky lg:top-6">
-              <h2 className="text-2xl font-bold text-[#2f241d]">
-                Order Summary
-              </h2>
-
-              <div className="mt-6 space-y-3">
-                {selectedOrderDetails.length === 0 && (
-                  <div className="rounded-2xl bg-[#f8f3ec] p-4 text-sm text-[#6f6258]">
-                    No menu selected yet.
-                  </div>
-                )}
-
-                {selectedOrderDetails.map((item) => (
-                  <div
-                    key={`${item.type}-${item.id}`}
-                    className="rounded-2xl border border-[#ead8c5] bg-[#fffaf5] p-4"
+                <Card className="bg-white/75">
+                  <p
+                    className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
                   >
-                    <p className="font-semibold text-[#2f241d]">{item.name}</p>
-                    <p className="mt-1 text-xs text-[#6f6258]">
-                      {item.type} · {item.quantity} × {formatPrice(item.price)}
-                    </p>
-                    <p className="mt-2 text-sm font-bold text-[#b8895b]">
-                      {formatPrice(item.subtotal)}
+                    Menu Packages
+                  </p>
+
+                  <div className="mt-4 max-h-70 space-y-3 overflow-y-auto pr-1">
+                    {filteredPackages.map((menuPackage) => (
+                      <div
+                        key={menuPackage.id}
+                        className="flex flex-col gap-3 rounded-3xl border border-[#EBDDD1] bg-[#FFF8F1]/85 p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <p className="font-semibold text-[#315F5B]">
+                            {menuPackage.name}
+                          </p>
+
+                          <p className="mt-1 text-sm text-[#7D6E66]">
+                            Package · {formatCurrency(menuPackage.price)}
+                          </p>
+                        </div>
+
+                        <Button
+                          variant="secondary"
+                          onClick={() => addPackage(menuPackage)}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="bg-white/75">
+                  <div className="flex items-end justify-between gap-4">
+                    <div>
+                      <p
+                        className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+                      >
+                        Current Selection
+                      </p>
+
+                      <h3
+                        className={`${cinzel.className} mt-2 text-xl font-semibold uppercase tracking-wider text-[#315F5B]`}
+                      >
+                        Order Draft
+                      </h3>
+                    </div>
+
+                    <p
+                      className={`${cinzel.className} text-lg font-semibold uppercase tracking-wider text-[#315F5B]`}
+                    >
+                      {formatCurrency(orderTotal)}
                     </p>
                   </div>
-                ))}
+
+                  {orderLines.length === 0 ? (
+                    <p className="mt-4 text-sm text-[#7D6E66]">
+                      No menu selected yet. You can also create a reservation
+                      without menu selection.
+                    </p>
+                  ) : (
+                    <div className="mt-4 space-y-3">
+                      {orderLines.map((line) => (
+                        <div
+                          key={line.id}
+                          className="flex flex-col gap-3 rounded-3xl bg-[#FFF8F1]/85 p-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div>
+                            <p className="font-semibold text-[#315F5B]">
+                              {line.name}
+                            </p>
+
+                            <p className="mt-1 text-sm text-[#7D6E66]">
+                              {line.type} · Qty {line.quantity} ·{" "}
+                              {formatCurrency(line.price * line.quantity)}
+                            </p>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            className="text-red-600"
+                            onClick={() => removeOrderLine(line.id)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
               </div>
-
-              <div className="mt-6 flex items-center justify-between border-t border-[#ead8c5] pt-5">
-                <p className="text-sm font-medium text-[#6f6258]">
-                  Estimated subtotal
-                </p>
-                <p className="text-xl font-bold text-[#b8895b]">
-                  {formatPrice(estimatedTotal)}
-                </p>
-              </div>
-
-              {error && (
-                <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-500">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-6 w-full rounded-xl bg-[#2f241d] px-5 py-4 text-sm font-medium text-white transition hover:bg-[#4a3a30] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isSubmitting
-                  ? "Creating reservation..."
-                  : "Create Reservation"}
-              </button>
-            </aside>
-          </form>
+            </div>
+          </div>
         </section>
+
+        <div className="relative z-10 mt-12">
+          <Footer />
+        </div>
       </main>
     </ProtectedRoute>
   );

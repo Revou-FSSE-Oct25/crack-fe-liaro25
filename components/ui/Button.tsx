@@ -1,6 +1,12 @@
 import * as React from "react";
 
-type ButtonVariant = "primary" | "secondary" | "outline" | "soft";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "soft"
+  | "gold"
+  | "ghost";
 
 type ButtonProps = {
   children: React.ReactNode;
@@ -18,14 +24,23 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#8FBFBE]/30 disabled:cursor-not-allowed disabled:opacity-50";
 
   const variants: Record<ButtonVariant, string> = {
-    primary: "bg-primary text-white hover:opacity-90",
-    secondary: "bg-secondary text-white hover:opacity-90",
+    primary:
+      "bg-[#315F5B] text-white shadow-lg shadow-teal-900/15 hover:-translate-y-0.5 hover:bg-[#264C49]",
+
+    secondary:
+      "bg-[#E8B7C8] text-white shadow-lg shadow-pink-200/40 hover:-translate-y-0.5 hover:bg-[#DFA6BA]",
+
     outline:
-      "border border-border-soft bg-white text-text-primary hover:bg-background",
-    soft: "bg-accent text-text-primary hover:opacity-90",
+      "border border-[#DCCBBB] bg-white/70 text-[#315F5B] backdrop-blur-sm hover:bg-[#FFF8F1]",
+
+    soft: "bg-[#DCEFF0] text-[#315F5B] hover:bg-[#CFE7E8]",
+
+    gold: "bg-[#C8A86A] text-white shadow-lg shadow-amber-200/30 hover:bg-[#B89552]",
+
+    ghost: "bg-transparent text-[#315F5B] hover:bg-white/50",
   };
 
   const hoverEffect = wiggleOnHover
