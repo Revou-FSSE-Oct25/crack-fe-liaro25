@@ -455,30 +455,70 @@ export default function CustomerReservationDetailPage() {
                 </div>
 
                 {reservation.order ? (
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <DetailItem
-                      label="Subtotal"
-                      value={formatCurrency(reservation.order.subtotal)}
-                    />
+                  <div className="mt-5 space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                      <DetailItem
+                        label="Subtotal"
+                        value={formatCurrency(reservation.order.subtotal)}
+                      />
 
-                    <DetailItem
-                      label="Tax"
-                      value={formatCurrency(reservation.order.tax)}
-                    />
+                      <DetailItem
+                        label="Tax"
+                        value={formatCurrency(reservation.order.tax)}
+                      />
 
-                    <DetailItem
-                      label="Total"
-                      value={formatCurrency(reservation.order.totalAmount)}
-                    />
+                      <DetailItem
+                        label="Total"
+                        value={formatCurrency(reservation.order.totalAmount)}
+                      />
 
-                    <DetailItem
-                      label="Status"
-                      value={
-                        <span className="capitalize">
-                          {reservation.order.status}
-                        </span>
-                      }
-                    />
+                      <DetailItem
+                        label="Status"
+                        value={
+                          <span className="capitalize">
+                            {reservation.order.status}
+                          </span>
+                        }
+                      />
+                    </div>
+
+                    {reservation.order.items &&
+                      reservation.order.items.length > 0 && (
+                        <div className="border-t border-[#EBDDD1] pt-6">
+                          <p
+                            className={`${cinzel.className} text-xs font-semibold uppercase tracking-widest text-[#C8A86A]`}
+                          >
+                            Ordered Items
+                          </p>
+
+                          <div className="mt-4 space-y-3">
+                            {reservation.order.items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex flex-col gap-3 rounded-3xl bg-[#FFF8F1]/85 p-4 sm:flex-row sm:items-center sm:justify-between"
+                              >
+                                <div>
+                                  <p className="font-semibold text-[#315F5B]">
+                                    {item.menuItem?.name ||
+                                      item.menuPackage?.name ||
+                                      "Menu Item"}
+                                  </p>
+
+                                  <p className="mt-1 text-sm text-[#7D6E66]">
+                                    Qty {item.quantity}
+                                  </p>
+                                </div>
+
+                                <p className="font-semibold text-[#C8A86A]">
+                                  {formatCurrency(
+                                    Number(item.price) * Number(item.quantity),
+                                  )}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 ) : (
                   <p className="mt-5 text-sm text-[#7D6E66]">
