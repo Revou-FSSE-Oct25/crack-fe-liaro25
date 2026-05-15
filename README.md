@@ -1,5 +1,7 @@
 # Whisk & Wonder Frontend
 
+![Next.js](https://img.shields.io/badge/Next.js-Frontend-black) ![React](https://img.shields.io/badge/React-UI-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-Language-blue) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-Styling-06B6D4) ![JWT](https://img.shields.io/badge/Auth-JWT-green) ![Vercel](https://img.shields.io/badge/Deploy-Vercel-black)
+
 A modern luxury afternoon tea reservation platform frontend built with Next.js, TypeScript, Tailwind CSS, and responsive UI architecture.
 
 The frontend connects with the Whisk & Wonder Backend API to provide seamless reservation management, authentication, ordering, and admin dashboard functionality.
